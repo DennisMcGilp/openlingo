@@ -19,7 +19,7 @@ export default async function ChatPage({
     searchParams,
   ]);
 
-  const availableModels = getModelsForUser(session.user.email);
+  const availableModels = await getModelsForUser(session.user.id);
 
   return (
     <ChatView
