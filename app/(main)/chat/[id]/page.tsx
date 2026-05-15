@@ -20,7 +20,7 @@ export default async function ChatConversationPage({
   if (!conv) notFound();
 
   const preferredModel = await getPreferredModel(session.user.id);
-  const availableModels = getModelsForUser(session.user.email);
+  const availableModels = await getModelsForUser(session.user.id);
 
   return (
     <ChatView
