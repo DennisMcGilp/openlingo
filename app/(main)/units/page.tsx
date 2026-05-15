@@ -15,7 +15,7 @@ const NEW_UNIT_PROMPT = "I want to create a new personalised unit";
 export default async function LearnPage() {
   const session = await auth.api.getSession({ headers: await headers() });
   const userId = session?.user?.id;
-  const isAdmin = isAdminEmail(session?.user?.email);
+  const isAdmin = session?.user?.email ? isAdminEmail(session.user.email) : false;
 
   const [standaloneUnits, ownedCourses] = await Promise.all([
     userId ? getStandaloneUnits(userId) : Promise.resolve([]),
