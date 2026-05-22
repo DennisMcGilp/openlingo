@@ -57,7 +57,7 @@ export async function updatePreferredModel(model: string) {
   const session = await requireSession();
   const userId = session.user.id;
 
-  const userModels = getModelsForUser(session.user.email);
+  const userModels = await getModelsForUser(session.user.id);
   const valid = userModels.some((m) => m.id === model);
   if (!valid) {
     throw new Error(`Unsupported model: ${model}`);
