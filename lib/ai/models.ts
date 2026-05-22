@@ -26,10 +26,9 @@ export const CHAT_AVAILABLE_MODELS = AVAILABLE_MODELS;
 
 // Helper functions
 export function getModel(provider: string, modelId: string) {
-  // The registry expects just the model ID (the provider is inferred from the registry)
-  return registry.languageModel(modelId);
+  const fullModelId = `${provider}:${modelId}`;
+  return registry.languageModel(fullModelId as `google:${string}` | `openai:${string}`);
 }
-
 export async function getModelsForUser(userId?: string) {
   return AVAILABLE_MODELS;
 }
