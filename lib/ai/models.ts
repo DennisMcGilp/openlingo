@@ -26,17 +26,15 @@ export const CHAT_AVAILABLE_MODELS = AVAILABLE_MODELS;
 
 // Helper functions
 export function getModel(provider: string, modelId: string) {
-  return registry.languageModel(provider, modelId);
+  // The registry expects just the model ID (the provider is inferred from the registry)
+  return registry.languageModel(modelId);
 }
 
 export async function getModelsForUser(userId?: string) {
-  // For now, return all available models
-  // You can add user-specific logic here later
   return AVAILABLE_MODELS;
 }
 
 export function isAdminEmail(email: string): boolean {
-  // Define admin emails here, or check against environment variable
   const adminEmails = (process.env.ADMIN_EMAILS || "").split(",").map(e => e.trim());
   return adminEmails.includes(email);
 }
