@@ -114,7 +114,7 @@ export async function aiLookup(
     const promptTemplate = getDefaultTemplate("word-analysis");
     const prompt = interpolateTemplate(promptTemplate, { target_language, word });
 
-    const model = getModel("gemini-2.5-flash-lite");
+    const model = getModel("google", "gemini-2.0-flash");
     const { object: analysis } = await generateObject({
       model,
       schema: wordAnalysisSchema,

@@ -143,7 +143,7 @@ async function main() {
   );
 
   const { text: markdown } = await generateText({
-    model: getModel(modelName),
+    model: getModel("google", modelName),
     prompt,
   });
 
