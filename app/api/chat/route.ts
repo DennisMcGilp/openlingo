@@ -18,7 +18,7 @@ export async function POST(req: Request) {
   const { messages, language: lang, model: requestedModel } = await req.json();
 
   const language: string = lang || (await getTargetLanguage(session.user.id)) || "en";
-  const userModels = getModelsForUser(session.user.email);
+  const userModels = await getModelsForUser(session.user.id);
   const modelId = userModels.some((m) => m.id === requestedModel)
     ? requestedModel
     : DEFAULT_CHAT_MODEL;
