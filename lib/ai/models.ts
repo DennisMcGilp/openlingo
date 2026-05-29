@@ -1,10 +1,10 @@
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { createGroq } from "@ai-sdk/groq";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createProviderRegistry } from "ai";
 
 // Provider setup
-const google = createGoogleGenerativeAI({
-  apiKey: process.env.GOOGLE_API_KEY,
+const groq = createGroq({
+  apiKey: process.env.GROQ_API_KEY,
 });
 
 const openai = createOpenAI({
@@ -12,14 +12,14 @@ const openai = createOpenAI({
 });
 
 const registry = createProviderRegistry({
-  google,
+  groq,
   openai,
 });
 
-// Available models list
+// Available models list (Groq's free models)
 export const AVAILABLE_MODELS = [
-  { id: "gemini-2.0-flash", label: "Gemini 2.0 Flash", provider: "google" },
-  { id: "gpt-4o", label: "GPT-4o", provider: "openai" },
+  { id: "llama-3.3-70b-versatile", label: "Llama 3.3 70B", provider: "groq" },
+  { id: "mixtral-8x7b-32768", label: "Mixtral 8x7B", provider: "groq" },
 ];
 
 export const CHAT_AVAILABLE_MODELS = AVAILABLE_MODELS;
@@ -27,8 +27,9 @@ export const CHAT_AVAILABLE_MODELS = AVAILABLE_MODELS;
 // Helper functions
 export function getModel(provider: string, modelId: string) {
   const fullModelId = `${provider}:${modelId}`;
-  return registry.languageModel(fullModelId as `google:${string}` | `openai:${string}`);
+  return registry.languageModel(fullModelId as `groq:${string}` | `openai:${string}`);
 }
+
 export async function getModelsForUser(userId?: string) {
   return AVAILABLE_MODELS;
 }
