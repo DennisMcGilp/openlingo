@@ -62,7 +62,7 @@ export async function POST(req: Request) {
     model: getModel("groq", "llama-3.3-70b-versatile"),
     system: systemPrompt,
     messages: await convertToModelMessages(messages),
-    tools,
+    // tools, // Temporarily disabled - Groq free tier doesn't handle tools well
     stopWhen: stepCountIs(7),
   });
 
