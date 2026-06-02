@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const { text } = await generateText({
-      model: getModel("google", "gemini-2.0-flash"),
+      model: getModel("groq", "llama-3.3-70b-versatile"),
       prompt,
     });
 

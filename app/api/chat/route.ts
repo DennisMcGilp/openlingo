@@ -59,7 +59,7 @@ export async function POST(req: Request) {
   });
 
   const result = streamText({
-    model: getModel("google", "gemini-2.0-flash"),
+    model: getModel("groq", "llama-3.3-70b-versatile"),
     system: systemPrompt,
     messages: await convertToModelMessages(messages),
     tools,
