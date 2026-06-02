@@ -1,5 +1,5 @@
 import { streamText, convertToModelMessages, stepCountIs } from "ai";
-import { getModel, getModelsForUser, createTools } from "@/lib/ai";
+import { getModel, getModelsForUser } from "@/lib/ai";
 import { requireSession } from "@/lib/auth-server";
 import { langCodeToName, interpolateTemplate, SRS_REFERENCE } from "@/lib/prompts";
 import { getUserPromptTemplate } from "@/lib/actions/prompts";
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     ? requestedModel
     : DEFAULT_CHAT_MODEL;
   const target_language = langCodeToName[language] || language;
-  const tools = createTools(session.user.id, language);
+  // const tools = createTools(session.user.id, language);
 
   const [chatTemplate, memoryRow, nativeLang] = await Promise.all([
     getUserPromptTemplate(session.user.id, "chat-system"),
@@ -62,7 +62,6 @@ export async function POST(req: Request) {
     model: getModel("groq", "llama-3.3-70b-versatile"),
     system: systemPrompt,
     messages: await convertToModelMessages(messages),
-    // tools, // Temporarily disabled - Groq free tier doesn't handle tools well
     stopWhen: stepCountIs(7),
   });
 
