@@ -24,7 +24,7 @@ export function TopBar({ stats, githubStars }: TopBarProps) {
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b-2 border-lingo-border bg-white px-4 md:px-6">
       <div className="md:hidden">
-        <span className="text-xl font-black text-lingo-green">OpenLingo</span>
+        <span className="text-xl font-black text-lingo-green">G.E.L.P. System</span>
       </div>
 
       {/* Stats */}
@@ -64,7 +64,7 @@ export function TopBar({ stats, githubStars }: TopBarProps) {
 
       {/* GitHub Link */}
       <a
-        href="https://github.com/pretzelai/openlingo"
+        href="https://github.com/dennismcgilp/gelp-system"
         target="_blank"
         rel="noopener noreferrer"
         className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-lingo-border bg-white px-3 py-1 text-lingo-text-light hover:text-lingo-text hover:border-lingo-text-light transition-colors"

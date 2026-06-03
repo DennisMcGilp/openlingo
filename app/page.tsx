@@ -49,7 +49,7 @@ export default async function LandingPage() {
 
         {/* GitHub Link */}
         <a
-          href="https://github.com/pretzelai/openlingo"
+          href="https://github.com/dennismcgilp/gelp-system"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 rounded-full border border-lingo-border bg-white px-4 py-2 text-lingo-text-light hover:text-lingo-text hover:border-lingo-text-light transition-colors mb-4"

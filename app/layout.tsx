@@ -22,13 +22,13 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://www.openlingo.dev"),
-  title: "OpenLingo",
-  description: "OpenSource AI connected to language learning",
+  metadataBase: new URL("https://gelp-system.vercel.app"),
+  title: "G.E.L.P System",
+  description: "Global English Language Proficiency - AI-powered preparation for KET, TOEIC, IELTS and more",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    title: "OpenLingo",
+    title: "G.E.L.P System",
     statusBarStyle: "default",
   },
   icons: {
