@@ -40,6 +40,34 @@ export async function POST(req: Request) {
       .then((rows) => rows[0]),
     getNativeLanguage(session.user.id),
   ]);
+  // TEMPORARY: Override with KET-specific prompt (remove once database is updated)
+  const ketPrompt = `You are a KET (Key English Test) tutor for A2-level young learners.
+
+GUIDELINES:
+- Use simple, clear vocabulary
+- Keep sentences short (8-12 words maximum)
+- Focus on basic grammar: present simple, past simple, future with 'going to'
+- Speaking topics: introductions, family, daily routine, likes/dislikes, school
+- Writing: short emails (25-35 words), filling in forms, simple descriptions
+- Reading: short signs, emails, simple articles (100-150 words)
+- Listening: slow, clear speech with simple vocabulary
+
+IMPORTANT: Your student is at KET level (A2). Do not use complex academic language.
+Be encouraging and patient. Use emojis occasionally to keep it fun.
+
+Course: KET
+Target language: {{target_language}}
+Native language: {{native_language}}
+Current date: {{current_date}}
+
+Student memory: {{memory}}
+
+Exercise syntax reference: {{exercise_syntax}}
+SRS reference: {{srs_reference}}`;
+
+  // Use KET prompt instead of database template
+const finalPrompt = ketPrompt;
+
 
   const memory = memoryRow?.value ?? "";
 
@@ -47,8 +75,9 @@ export async function POST(req: Request) {
 
   const now = new Date();
   const current_date = `${String(now.getDate()).padStart(2, "0")}-${now.toLocaleString("en-US", { month: "short" })}-${now.getFullYear()}`;
-
-  const systemPrompt = interpolateTemplate(chatTemplate, {
+  // TEMPORARY: Hardcode course for KET (remove once course selector is built)
+  const course = "KET";
+  const systemPrompt = interpolateTemplate(finalPrompt, {
     current_date,
     target_language,
     target_language_code: language,
@@ -56,6 +85,7 @@ export async function POST(req: Request) {
     memory,
     exercise_syntax: EXERCISE_SYNTAX,
     srs_reference: SRS_REFERENCE,
+    course, // <-- ADD THIS LINE
   });
 
   const result = streamText({
