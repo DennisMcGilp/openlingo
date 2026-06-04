@@ -7,6 +7,7 @@ import {
   jsonb,
   date,
   real,
+  uuid,  // <-- ADD THIS
   uniqueIndex,
   primaryKey,
   index,
@@ -24,6 +25,20 @@ export const user = pgTable("user", {
   createdAt: timestamp("created_at").notNull(),
   updatedAt: timestamp("updated_at").notNull(),
 });
+export const userProgress = pgTable("user_progress", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  moduleId: text("module_id").notNull(), // e.g., "ket_module_1"
+  lessonCompleted: boolean("lesson_completed").default(false),
+  quizPassed: boolean("quiz_passed").default(false),
+  score: integer("score"), // Quiz score percentage
+  points: integer("points").default(0),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  userIdModuleIdIdx: index("user_id_module_id_idx").on(table.userId, table.moduleId),
+}));
 
 export const session = pgTable("session", {
   id: text("id").primaryKey(),
