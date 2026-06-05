@@ -76,31 +76,103 @@ export default function ModuleDetailPage() {
   const [loading, setLoading] = useState(true);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [showQuiz, setShowQuiz] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const moduleId = params.id as string;
 
+  // Load module data and user progress
   useEffect(() => {
     if (session?.user) {
-      loadModule();
+      loadModuleAndProgress();
     }
   }, [session, moduleId]);
 
-  async function loadModule() {
+  async function loadModuleAndProgress() {
     const data = getModuleData(moduleId);
-    setModuleData(data);
+    if (!data) {
+      setLoading(false);
+      return;
+    }
+
+    // Load saved progress from API
+    try {
+      const res = await fetch(`/api/progress?moduleId=${moduleId}`);
+      const progress = await res.json();
+     
+      if (progress.lessonCompleted) {
+        data.lessons = data.lessons.map(lesson => ({ ...lesson, completed: true }));
+      }
+     
+      data.quizCompleted = progress.quizPassed;
+      data.quizPassed = progress.quizPassed;
+     
+      setModuleData(data);
+    } catch (error) {
+      console.error("Failed to load progress:", error);
+      setModuleData(data);
+    }
     setLoading(false);
   }
 
-  const allLessonsCompleted = moduleData?.lessons.every(l => l.completed) ?? false;
-  const canTakeQuiz = allLessonsCompleted && !moduleData?.quizCompleted;
-
-  function completeLesson(lessonId: string) {
-    if (!moduleData) return;
+  async function completeLesson(lessonId: string) {
+    if (!moduleData || saving) return;
+    setSaving(true);
+   
     const updatedLessons = moduleData.lessons.map(lesson =>
       lesson.id === lessonId ? { ...lesson, completed: true } : lesson
     );
     setModuleData({ ...moduleData, lessons: updatedLessons });
+   
+    const allCompleted = updatedLessons.every(l => l.completed);
+   
+    try {
+      await fetch("/api/progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          moduleId,
+          lessonCompleted: allCompleted,
+        }),
+      });
+    } catch (error) {
+      console.error("Failed to save progress:", error);
+    } finally {
+      setSaving(false);
+    }
   }
+
+  async function completeQuiz(score: number) {
+    if (!moduleData || saving) return;
+    setSaving(true);
+   
+    const passed = score >= 80;
+   
+    setModuleData({
+      ...moduleData,
+      quizCompleted: passed,
+      quizPassed: passed,
+    });
+   
+    try {
+      await fetch("/api/progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          moduleId,
+          quizPassed: passed,
+          score,
+          points: passed ? moduleData.totalPoints : 0,
+        }),
+      });
+    } catch (error) {
+      console.error("Failed to save quiz progress:", error);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const allLessonsCompleted = moduleData?.lessons.every(l => l.completed) ?? false;
+  const canTakeQuiz = allLessonsCompleted && !moduleData?.quizCompleted;
 
   if (!session) {
     return (
@@ -193,7 +265,8 @@ export default function ModuleDetailPage() {
             {!lesson.completed ? (
               <button
                 onClick={() => setSelectedLesson(lesson)}
-                className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-white hover:bg-amber-600 transition-colors"
+                disabled={saving}
+                className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-white hover:bg-amber-600 transition-colors disabled:opacity-50"
               >
                 Start Lesson
               </button>
@@ -214,20 +287,20 @@ export default function ModuleDetailPage() {
               {!allLessonsCompleted
                 ? `Complete all ${moduleData.lessons.length} lessons to unlock the quiz`
                 : moduleData.quizCompleted
-                ? "You have already completed this quiz"
+                ? "🎉 You passed the quiz! Module complete!"
                 : "Test your knowledge and earn 100 points!"}
             </p>
           </div>
           <button
             onClick={() => setShowQuiz(true)}
-            disabled={!canTakeQuiz}
+            disabled={!canTakeQuiz || saving}
             className={`rounded-lg px-6 py-3 font-bold transition-colors ${
               canTakeQuiz
                 ? "bg-white text-purple-600 hover:bg-gray-100"
                 : "cursor-not-allowed bg-gray-400 text-gray-200"
             }`}
           >
-            {moduleData.quizCompleted ? "Quiz Completed ✓" : "Take Quiz"}
+            {moduleData.quizCompleted ? "✓ Completed" : "Take Quiz"}
           </button>
         </div>
       </div>
@@ -263,7 +336,8 @@ export default function ModuleDetailPage() {
                   completeLesson(selectedLesson.id);
                   setSelectedLesson(null);
                 }}
-                className="rounded-lg bg-green-500 px-4 py-2 text-white hover:bg-green-600"
+                disabled={saving}
+                className="rounded-lg bg-green-500 px-4 py-2 text-white hover:bg-green-600 disabled:opacity-50"
               >
                 Mark as Complete
               </button>
@@ -276,13 +350,22 @@ export default function ModuleDetailPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="max-w-lg w-full rounded-lg bg-white p-6">
             <h2 className="text-xl font-bold">Module Quiz</h2>
-            <p className="mt-2 text-gray-600">Quiz questions will go here. Score 80% or higher to unlock the next module!</p>
+            <p className="mt-2 text-gray-600">Quiz coming soon! Score 80% or higher to unlock the next module.</p>
             <div className="mt-6 flex justify-end gap-3">
               <button
                 onClick={() => setShowQuiz(false)}
                 className="rounded-lg bg-amber-500 px-4 py-2 text-white hover:bg-amber-600"
               >
                 Close
+              </button>
+              <button
+                onClick={() => {
+                  completeQuiz(100);
+                  setShowQuiz(false);
+                }}
+                className="rounded-lg bg-green-500 px-4 py-2 text-white hover:bg-green-600"
+              >
+                Simulate Pass (Testing)
               </button>
             </div>
           </div>
