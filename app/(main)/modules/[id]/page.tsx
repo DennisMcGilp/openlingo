@@ -10,7 +10,7 @@ interface Lesson {
   title: string;
   description: string;
   type: "vocabulary" | "grammar" | "speaking" | "listening" | "reading" | "writing";
-  duration: number; // minutes
+  duration: number;
   completed: boolean;
 }
 
@@ -26,8 +26,6 @@ interface ModuleData {
   totalPoints: number;
 }
 
-// Hardcoded module data for KET Module 1
-// TODO: Move to database later
 const getModuleData = (moduleId: string): ModuleData | null => {
   if (moduleId === "ket_module_1") {
     return {
@@ -88,7 +86,6 @@ export default function ModuleDetailPage() {
   }, [session, moduleId]);
 
   async function loadModule() {
-    // TODO: Fetch from database with user progress
     const data = getModuleData(moduleId);
     setModuleData(data);
     setLoading(false);
@@ -97,17 +94,12 @@ export default function ModuleDetailPage() {
   const allLessonsCompleted = moduleData?.lessons.every(l => l.completed) ?? false;
   const canTakeQuiz = allLessonsCompleted && !moduleData?.quizCompleted;
 
-  async function completeLesson(lessonId: string) {
+  function completeLesson(lessonId: string) {
     if (!moduleData) return;
-   
-    // Update local state
     const updatedLessons = moduleData.lessons.map(lesson =>
       lesson.id === lessonId ? { ...lesson, completed: true } : lesson
     );
     setModuleData({ ...moduleData, lessons: updatedLessons });
-   
-    // TODO: Save to database
-    // await saveLessonCompletion(moduleId, lessonId);
   }
 
   if (!session) {
@@ -147,20 +139,17 @@ export default function ModuleDetailPage() {
     );
   }
 
-  // Calculate progress
   const completedCount = moduleData.lessons.filter(l => l.completed).length;
   const progressPercent = (completedCount / moduleData.lessons.length) * 100;
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      {/* Back button */}
       <div className="mb-4">
         <Link href="/modules" className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700">
           ← Back to Modules
         </Link>
       </div>
 
-      {/* Module header */}
       <div className={`mb-6 rounded-lg ${moduleData.color} p-6 text-white shadow-lg`}>
         <div className="flex items-center gap-3">
           <span className="text-4xl">{moduleData.icon}</span>
@@ -177,7 +166,6 @@ export default function ModuleDetailPage() {
         </div>
       </div>
 
-      {/* Lessons list */}
       <div className="mb-8 space-y-3">
         <h2 className="text-xl font-bold text-gray-800">Lessons</h2>
         {moduleData.lessons.map((lesson, index) => (
@@ -204,7 +192,7 @@ export default function ModuleDetailPage() {
             </div>
             {!lesson.completed ? (
               <button
-                onClick={() => setSelectedLesson(lesson.id)}
+                onClick={() => setSelectedLesson(lesson)}
                 className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-white hover:bg-amber-600 transition-colors"
               >
                 Start Lesson
@@ -212,19 +200,12 @@ export default function ModuleDetailPage() {
             ) : (
               <div className="flex items-center gap-2 text-green-500">
                 <span>✓ Completed</span>
-                <button
-                  onClick={() => setSelectedLesson(lesson)}
-                  className="text-sm text-blue-500 underline hover:text-blue-600"
-                >
-                  Review
-                </button>
               </div>
             )}
           </div>
         ))}
       </div>
 
-      {/* Competency Quiz section */}
       <div className="rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 p-6 text-white shadow-lg">
         <div className="flex items-center justify-between">
           <div>
@@ -251,46 +232,62 @@ export default function ModuleDetailPage() {
         </div>
       </div>
 
-      {/* Simple lesson modal (placeholder) */}
-     {selectedLesson && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-    <div className="max-w-lg w-full max-h-[80vh] overflow-y-auto rounded-lg bg-white p-6">
-      <h2 className="text-xl font-bold">{selectedLesson.title}</h2>
-      <p className="mt-2 text-gray-600">Lesson content will go here.</p>
-     
-      <div className="mt-4 rounded-lg bg-blue-50 p-4">
-        <p className="text-sm text-blue-800">
-          💡 <strong>AI Activity:</strong> Practice {selectedLesson.type} skills with the AI tutor.
-        </p>
-        <button
-          onClick={() => {
-            // Open AI chat with a preset prompt for this lesson
-            router.push(`/chat?prompt=Let's practice ${selectedLesson.title} for KET level A2.`);
-            setSelectedLesson(null);
-          }}
-          className="mt-3 w-full rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
-        >
-          Open AI Tutor
-        </button>
-      </div>
-     
-      <div className="mt-6 flex justify-end gap-3">
-        <button
-          onClick={() => setSelectedLesson(null)}
-          className="rounded-lg px-4 py-2 text-gray-500 hover:bg-gray-100"
-        >
-          Close
-        </button>
-        <button
-          onClick={() => {
-            completeLesson(selectedLesson.id);
-            setSelectedLesson(null);
-          }}
-          className="rounded-lg bg-green-500 px-4 py-2 text-white hover:bg-green-600"
-        >
-          Mark as Complete
-        </button>
-      </div>
+      {selectedLesson && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="max-w-lg w-full max-h-[80vh] overflow-y-auto rounded-lg bg-white p-6">
+            <h2 className="text-xl font-bold">{selectedLesson.title}</h2>
+            <p className="mt-2 text-gray-600">{selectedLesson.description}</p>
+            <div className="mt-4 rounded-lg bg-blue-50 p-4">
+              <p className="text-sm text-blue-800">
+                💡 <strong>AI Activity:</strong> Practice {selectedLesson.type} skills with the AI tutor.
+              </p>
+              <button
+                onClick={() => {
+                  router.push(`/chat?prompt=Let's practice ${selectedLesson.title} for KET level A2.`);
+                  setSelectedLesson(null);
+                }}
+                className="mt-3 w-full rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+              >
+                Open AI Tutor
+              </button>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => setSelectedLesson(null)}
+                className="rounded-lg px-4 py-2 text-gray-500 hover:bg-gray-100"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  completeLesson(selectedLesson.id);
+                  setSelectedLesson(null);
+                }}
+                className="rounded-lg bg-green-500 px-4 py-2 text-white hover:bg-green-600"
+              >
+                Mark as Complete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showQuiz && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="max-w-lg w-full rounded-lg bg-white p-6">
+            <h2 className="text-xl font-bold">Module Quiz</h2>
+            <p className="mt-2 text-gray-600">Quiz questions will go here. Score 80% or higher to unlock the next module!</p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => setShowQuiz(false)}
+                className="rounded-lg bg-amber-500 px-4 py-2 text-white hover:bg-amber-600"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  </div>
-)}
+  );
+}
