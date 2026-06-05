@@ -204,7 +204,7 @@ export default function ModuleDetailPage() {
             </div>
             {!lesson.completed ? (
               <button
-                onClick={() => completeLesson(lesson.id)}
+                onClick={() => setSelectedLesson(lesson.id)}
                 className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-white hover:bg-amber-600 transition-colors"
               >
                 Start Lesson
@@ -252,40 +252,45 @@ export default function ModuleDetailPage() {
       </div>
 
       {/* Simple lesson modal (placeholder) */}
-      {selectedLesson && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="max-w-lg w-full rounded-lg bg-white p-6">
-            <h2 className="text-xl font-bold">{selectedLesson.title}</h2>
-            <p className="mt-2 text-gray-600">Lesson content will go here. The AI can help practice {selectedLesson.type} skills.</p>
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                onClick={() => setSelectedLesson(null)}
-                className="rounded-lg px-4 py-2 text-gray-500 hover:bg-gray-100"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Quiz modal placeholder */}
-      {showQuiz && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="max-w-lg w-full rounded-lg bg-white p-6">
-            <h2 className="text-xl font-bold">Module Quiz</h2>
-            <p className="mt-2 text-gray-600">Quiz questions will go here. Score 80% or higher to unlock the next module!</p>
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                onClick={() => setShowQuiz(false)}
-                className="rounded-lg bg-amber-500 px-4 py-2 text-white hover:bg-amber-600"
-              >
-                Close (Quiz coming soon)
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+     {selectedLesson && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div className="max-w-lg w-full max-h-[80vh] overflow-y-auto rounded-lg bg-white p-6">
+      <h2 className="text-xl font-bold">{selectedLesson.title}</h2>
+      <p className="mt-2 text-gray-600">Lesson content will go here.</p>
+     
+      <div className="mt-4 rounded-lg bg-blue-50 p-4">
+        <p className="text-sm text-blue-800">
+          💡 <strong>AI Activity:</strong> Practice {selectedLesson.type} skills with the AI tutor.
+        </p>
+        <button
+          onClick={() => {
+            // Open AI chat with a preset prompt for this lesson
+            router.push(`/chat?prompt=Let's practice ${selectedLesson.title} for KET level A2.`);
+            setSelectedLesson(null);
+          }}
+          className="mt-3 w-full rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+        >
+          Open AI Tutor
+        </button>
+      </div>
+     
+      <div className="mt-6 flex justify-end gap-3">
+        <button
+          onClick={() => setSelectedLesson(null)}
+          className="rounded-lg px-4 py-2 text-gray-500 hover:bg-gray-100"
+        >
+          Close
+        </button>
+        <button
+          onClick={() => {
+            completeLesson(selectedLesson.id);
+            setSelectedLesson(null);
+          }}
+          className="rounded-lg bg-green-500 px-4 py-2 text-white hover:bg-green-600"
+        >
+          Mark as Complete
+        </button>
+      </div>
     </div>
-  );
-}
+  </div>
+)}
