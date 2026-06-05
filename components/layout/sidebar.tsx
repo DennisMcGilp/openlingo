@@ -5,15 +5,7 @@ import { usePathname } from "next/navigation";
 
 const navItems = [
   { href: "/chat", label: "Chat", icon: "💬" },
-  { href: "/units", label: "Units", icon: "📚" },
-  { href: "/read", label: "Read", icon: "📖" },
-  { href: "/words", label: "Words", icon: "🔤" },
-  { href: "/settings", label: "Settings", icon: "⚙️" },
-];
-
-const navItems = [
-  { href: "/chat", label: "Chat", icon: "💬" },
-  { href: "/modules", label: "Modules", icon: "📚" },  // <-- ADD THIS LINE
+  { href: "/modules", label: "Modules", icon: "📚" },
   { href: "/units", label: "Units", icon: "📖" },
   { href: "/read", label: "Read", icon: "📖" },
   { href: "/words", label: "Words", icon: "🔤" },
