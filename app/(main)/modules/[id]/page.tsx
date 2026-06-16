@@ -94,17 +94,20 @@ export default function ModuleDetailPage() {
       return;
     }
 
-    // Load saved progress from API
     try {
       const res = await fetch(`/api/progress?moduleId=${moduleId}`);
       const progress = await res.json();
+      console.log("Loaded progress:", progress);
      
+      // Apply lesson completion from database
       if (progress.lessonCompleted) {
         data.lessons = data.lessons.map(lesson => ({ ...lesson, completed: true }));
+      } else {
+        data.lessons = data.lessons.map(lesson => ({ ...lesson, completed: false }));
       }
      
-      data.quizCompleted = progress.quizPassed;
-      data.quizPassed = progress.quizPassed;
+      data.quizCompleted = progress.quizPassed || false;
+      data.quizPassed = progress.quizPassed || false;
      
       setModuleData(data);
     } catch (error) {
@@ -115,42 +118,40 @@ export default function ModuleDetailPage() {
   }
 
   async function completeLesson(lessonId: string) {
-  if (!moduleData || saving) return;
-  setSaving(true);
- 
-  // Optimistic update: mark lesson as completed locally
-  const updatedLessons = moduleData.lessons.map(lesson =>
-    lesson.id === lessonId ? { ...lesson, completed: true } : lesson
-  );
-  const allCompleted = updatedLessons.every(l => l.completed);
-  setModuleData({ ...moduleData, lessons: updatedLessons });
- 
-  try {
-    // Save to database
-    const response = await fetch("/api/progress", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        moduleId,
-        lessonCompleted: allCompleted,
-      }),
-    });
+    if (!moduleData || saving) return;
+    setSaving(true);
    
-    const result = await response.json();
-    console.log("Progress saved:", result);
+    // Optimistic update
+    const updatedLessons = moduleData.lessons.map(lesson =>
+      lesson.id === lessonId ? { ...lesson, completed: true } : lesson
+    );
+    const allCompleted = updatedLessons.every(l => l.completed);
+    setModuleData({ ...moduleData, lessons: updatedLessons });
    
-    // If successful, reload fresh data from database
-    if (result.success) {
+    try {
+      const response = await fetch("/api/progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          moduleId,
+          lessonCompleted: allCompleted,
+        }),
+      });
+     
+      const result = await response.json();
+      console.log("Progress saved:", result);
+     
+      // Reload fresh data from database
       await loadModuleAndProgress();
+     
+    } catch (error) {
+      console.error("Failed to save progress:", error);
+      // Revert optimistic update on error
+      await loadModuleAndProgress();
+    } finally {
+      setSaving(false);
     }
-  } catch (error) {
-    console.error("Failed to save progress:", error);
-    // Revert optimistic update on error
-    loadModuleAndProgress();
-  } finally {
-    setSaving(false);
   }
-}
 
   async function completeQuiz(score: number) {
     if (!moduleData || saving) return;
@@ -175,8 +176,12 @@ export default function ModuleDetailPage() {
           points: passed ? moduleData.totalPoints : 0,
         }),
       });
+     
+      await loadModuleAndProgress();
+     
     } catch (error) {
       console.error("Failed to save quiz progress:", error);
+      await loadModuleAndProgress();
     } finally {
       setSaving(false);
     }
