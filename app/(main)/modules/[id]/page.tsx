@@ -118,16 +118,16 @@ export default function ModuleDetailPage() {
   if (!moduleData || saving) return;
   setSaving(true);
  
-  // Immediately update local state (optimistic update)
+  // Optimistic update: mark lesson as completed locally
   const updatedLessons = moduleData.lessons.map(lesson =>
     lesson.id === lessonId ? { ...lesson, completed: true } : lesson
   );
+  const allCompleted = updatedLessons.every(l => l.completed);
   setModuleData({ ...moduleData, lessons: updatedLessons });
  
-  const allCompleted = updatedLessons.every(l => l.completed);
- 
   try {
-    await fetch("/api/progress", {
+    // Save to database
+    const response = await fetch("/api/progress", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -136,11 +136,17 @@ export default function ModuleDetailPage() {
       }),
     });
    
-    // 🔄 RELOAD PROGRESS FROM DATABASE
-    await loadModuleAndProgress();
+    const result = await response.json();
+    console.log("Progress saved:", result);
    
+    // If successful, reload fresh data from database
+    if (result.success) {
+      await loadModuleAndProgress();
+    }
   } catch (error) {
     console.error("Failed to save progress:", error);
+    // Revert optimistic update on error
+    loadModuleAndProgress();
   } finally {
     setSaving(false);
   }
