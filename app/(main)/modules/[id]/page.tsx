@@ -115,31 +115,36 @@ export default function ModuleDetailPage() {
   }
 
   async function completeLesson(lessonId: string) {
-    if (!moduleData || saving) return;
-    setSaving(true);
+  if (!moduleData || saving) return;
+  setSaving(true);
+ 
+  // Immediately update local state (optimistic update)
+  const updatedLessons = moduleData.lessons.map(lesson =>
+    lesson.id === lessonId ? { ...lesson, completed: true } : lesson
+  );
+  setModuleData({ ...moduleData, lessons: updatedLessons });
+ 
+  const allCompleted = updatedLessons.every(l => l.completed);
+ 
+  try {
+    await fetch("/api/progress", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        moduleId,
+        lessonCompleted: allCompleted,
+      }),
+    });
    
-    const updatedLessons = moduleData.lessons.map(lesson =>
-      lesson.id === lessonId ? { ...lesson, completed: true } : lesson
-    );
-    setModuleData({ ...moduleData, lessons: updatedLessons });
+    // 🔄 RELOAD PROGRESS FROM DATABASE
+    await loadModuleAndProgress();
    
-    const allCompleted = updatedLessons.every(l => l.completed);
-   
-    try {
-      await fetch("/api/progress", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          moduleId,
-          lessonCompleted: allCompleted,
-        }),
-      });
-    } catch (error) {
-      console.error("Failed to save progress:", error);
-    } finally {
-      setSaving(false);
-    }
+  } catch (error) {
+    console.error("Failed to save progress:", error);
+  } finally {
+    setSaving(false);
   }
+}
 
   async function completeQuiz(score: number) {
     if (!moduleData || saving) return;
