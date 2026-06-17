@@ -80,7 +80,6 @@ export default function ModuleDetailPage() {
 
   const moduleId = params.id as string;
 
-  // Load module data and user progress
   useEffect(() => {
     if (session?.user) {
       loadModuleAndProgress();
@@ -88,6 +87,7 @@ export default function ModuleDetailPage() {
   }, [session, moduleId]);
 
   async function loadModuleAndProgress() {
+    console.log("🔄 loadModuleAndProgress started");
     const data = getModuleData(moduleId);
     if (!data) {
       setLoading(false);
@@ -96,22 +96,23 @@ export default function ModuleDetailPage() {
 
     try {
       const res = await fetch(`/api/progress?moduleId=${moduleId}`);
+      console.log("📡 GET /api/progress status:", res.status);
       const progress = await res.json();
-      console.log("Loaded progress:", progress);
-     
-      // Apply lesson completion from database
+      console.log("📥 Loaded progress:", progress);
+
       if (progress.lessonCompleted) {
         data.lessons = data.lessons.map(lesson => ({ ...lesson, completed: true }));
       } else {
         data.lessons = data.lessons.map(lesson => ({ ...lesson, completed: false }));
       }
-     
+
       data.quizCompleted = progress.quizPassed || false;
       data.quizPassed = progress.quizPassed || false;
-     
+
       setModuleData(data);
+      console.log("✅ Module data updated:", data);
     } catch (error) {
-      console.error("Failed to load progress:", error);
+      console.error("❌ Failed to load progress:", error);
       setModuleData(data);
     }
     setLoading(false);
@@ -120,15 +121,18 @@ export default function ModuleDetailPage() {
   async function completeLesson(lessonId: string) {
     if (!moduleData || saving) return;
     setSaving(true);
-   
-    // Optimistic update
+
+    console.log("1. Starting completeLesson for:", lessonId);
+
     const updatedLessons = moduleData.lessons.map(lesson =>
       lesson.id === lessonId ? { ...lesson, completed: true } : lesson
     );
     const allCompleted = updatedLessons.every(l => l.completed);
+    console.log("2. All lessons completed?", allCompleted);
     setModuleData({ ...moduleData, lessons: updatedLessons });
-   
+
     try {
+      console.log("3. Sending POST request to /api/progress");
       const response = await fetch("/api/progress", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -137,18 +141,22 @@ export default function ModuleDetailPage() {
           lessonCompleted: allCompleted,
         }),
       });
-     
+
+      console.log("4. POST response status:", response.status);
       const result = await response.json();
-      console.log("Progress saved:", result);
-     
-      // Reload fresh data from database
-      await loadModuleAndProgress();
-     
+      console.log("5. POST response data:", result);
+
+      if (result.success) {
+        console.log("6. Success! Reloading progress...");
+        await loadModuleAndProgress();
+      } else {
+        console.log("6. Server returned success: false");
+      }
     } catch (error) {
-      console.error("Failed to save progress:", error);
-      // Revert optimistic update on error
+      console.error("7. Error in completeLesson:", error);
       await loadModuleAndProgress();
     } finally {
+      console.log("8. Setting saving to false");
       setSaving(false);
     }
   }
@@ -156,15 +164,15 @@ export default function ModuleDetailPage() {
   async function completeQuiz(score: number) {
     if (!moduleData || saving) return;
     setSaving(true);
-   
+
     const passed = score >= 80;
-   
+
     setModuleData({
       ...moduleData,
       quizCompleted: passed,
       quizPassed: passed,
     });
-   
+
     try {
       await fetch("/api/progress", {
         method: "POST",
@@ -176,9 +184,8 @@ export default function ModuleDetailPage() {
           points: passed ? moduleData.totalPoints : 0,
         }),
       });
-     
+
       await loadModuleAndProgress();
-     
     } catch (error) {
       console.error("Failed to save quiz progress:", error);
       await loadModuleAndProgress();
