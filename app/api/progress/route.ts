@@ -4,7 +4,6 @@ import { db } from "@/lib/db";
 import { userProgress } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 
-// GET: Fetch user progress for a specific module
 export async function GET(req: NextRequest) {
   try {
     const session = await requireSession();
@@ -20,8 +19,8 @@ export async function GET(req: NextRequest) {
       .from(userProgress)
       .where(
         and(
-          eq(userProgress.userId, session.user.id),
-          eq(userProgress.moduleId, moduleId)
+          eq(userProgress.user_id, session.user.id),
+          eq(userProgress.module_id, moduleId)
         )
       )
       .limit(1);
@@ -36,14 +35,25 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    return NextResponse.json(progress[0]);
+    // Convert snake_case to camelCase for the frontend
+    return NextResponse.json({
+      id: progress[0].id,
+      userId: progress[0].user_id,
+      moduleId: progress[0].module_id,
+      lessonCompleted: progress[0].lesson_completed,
+      quizPassed: progress[0].quiz_passed,
+      score: progress[0].score,
+      points: progress[0].points,
+      completedAt: progress[0].completed_at,
+      createdAt: progress[0].created_at,
+      updatedAt: progress[0].updated_at,
+    });
   } catch (error) {
     console.error("Error fetching progress:", error);
     return NextResponse.json({ error: "Failed to fetch progress" }, { status: 500 });
   }
 }
 
-// POST: Save or update lesson progress
 export async function POST(req: NextRequest) {
   try {
     const session = await requireSession();
@@ -60,39 +70,39 @@ export async function POST(req: NextRequest) {
       .from(userProgress)
       .where(
         and(
-          eq(userProgress.userId, session.user.id),
-          eq(userProgress.moduleId, moduleId)
+          eq(userProgress.user_id, session.user.id),
+          eq(userProgress.module_id, moduleId)
         )
       )
       .limit(1);
 
     if (existing.length === 0) {
-      // Create new record
+      // Create new record with snake_case column names
       await db.insert(userProgress).values({
-        userId: session.user.id,
-        moduleId: moduleId,
-        lessonCompleted: lessonCompleted || false,
-        quizPassed: quizPassed || false,
+        user_id: session.user.id,
+        module_id: moduleId,
+        lesson_completed: lessonCompleted || false,
+        quiz_passed: quizPassed || false,
         score: score || 0,
         points: points || 0,
-        completedAt: quizPassed ? new Date() : null,
+        completed_at: quizPassed ? new Date() : null,
       });
     } else {
-      // Update existing record
+      // Update existing record with snake_case column names
       await db
         .update(userProgress)
         .set({
-          lessonCompleted: lessonCompleted !== undefined ? lessonCompleted : existing[0].lessonCompleted,
-          quizPassed: quizPassed !== undefined ? quizPassed : existing[0].quizPassed,
+          lesson_completed: lessonCompleted !== undefined ? lessonCompleted : existing[0].lesson_completed,
+          quiz_passed: quizPassed !== undefined ? quizPassed : existing[0].quiz_passed,
           score: score !== undefined ? score : existing[0].score,
           points: points !== undefined ? points : existing[0].points,
-          completedAt: quizPassed ? new Date() : existing[0].completedAt,
-          updatedAt: new Date(),
+          completed_at: quizPassed ? new Date() : existing[0].completed_at,
+          updated_at: new Date(),
         })
         .where(
           and(
-            eq(userProgress.userId, session.user.id),
-            eq(userProgress.moduleId, moduleId)
+            eq(userProgress.user_id, session.user.id),
+            eq(userProgress.module_id, moduleId)
           )
         );
     }
