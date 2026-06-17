@@ -19,8 +19,8 @@ export async function GET(req: NextRequest) {
       .from(userProgress)
       .where(
         and(
-          eq(userProgress.user_id, session.user.id),
-          eq(userProgress.module_id, moduleId)
+          eq(userProgress.userId, session.user.id),  // Use camelCase property name
+          eq(userProgress.moduleId, moduleId)        // Use camelCase property name
         )
       )
       .limit(1);
@@ -35,18 +35,19 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // Convert snake_case to camelCase for the frontend
+    // Drizzle automatically maps camelCase to snake_case in the database
+    // So we can return the object directly
     return NextResponse.json({
       id: progress[0].id,
-      userId: progress[0].user_id,
-      moduleId: progress[0].module_id,
-      lessonCompleted: progress[0].lesson_completed,
-      quizPassed: progress[0].quiz_passed,
+      userId: progress[0].userId,
+      moduleId: progress[0].moduleId,
+      lessonCompleted: progress[0].lessonCompleted,
+      quizPassed: progress[0].quizPassed,
       score: progress[0].score,
       points: progress[0].points,
-      completedAt: progress[0].completed_at,
-      createdAt: progress[0].created_at,
-      updatedAt: progress[0].updated_at,
+      completedAt: progress[0].completedAt,
+      createdAt: progress[0].createdAt,
+      updatedAt: progress[0].updatedAt,
     });
   } catch (error) {
     console.error("Error fetching progress:", error);
@@ -70,39 +71,39 @@ export async function POST(req: NextRequest) {
       .from(userProgress)
       .where(
         and(
-          eq(userProgress.user_id, session.user.id),
-          eq(userProgress.module_id, moduleId)
+          eq(userProgress.userId, session.user.id),  // Use camelCase property name
+          eq(userProgress.moduleId, moduleId)        // Use camelCase property name
         )
       )
       .limit(1);
 
     if (existing.length === 0) {
-      // Create new record with snake_case column names
+      // Create new record using camelCase property names
       await db.insert(userProgress).values({
-        user_id: session.user.id,
-        module_id: moduleId,
-        lesson_completed: lessonCompleted || false,
-        quiz_passed: quizPassed || false,
+        userId: session.user.id,
+        moduleId: moduleId,
+        lessonCompleted: lessonCompleted || false,
+        quizPassed: quizPassed || false,
         score: score || 0,
         points: points || 0,
-        completed_at: quizPassed ? new Date() : null,
+        completedAt: quizPassed ? new Date() : null,
       });
     } else {
-      // Update existing record with snake_case column names
+      // Update existing record using camelCase property names
       await db
         .update(userProgress)
         .set({
-          lesson_completed: lessonCompleted !== undefined ? lessonCompleted : existing[0].lesson_completed,
-          quiz_passed: quizPassed !== undefined ? quizPassed : existing[0].quiz_passed,
+          lessonCompleted: lessonCompleted !== undefined ? lessonCompleted : existing[0].lessonCompleted,
+          quizPassed: quizPassed !== undefined ? quizPassed : existing[0].quizPassed,
           score: score !== undefined ? score : existing[0].score,
           points: points !== undefined ? points : existing[0].points,
-          completed_at: quizPassed ? new Date() : existing[0].completed_at,
-          updated_at: new Date(),
+          completedAt: quizPassed ? new Date() : existing[0].completedAt,
+          updatedAt: new Date(),
         })
         .where(
           and(
-            eq(userProgress.user_id, session.user.id),
-            eq(userProgress.module_id, moduleId)
+            eq(userProgress.userId, session.user.id),
+            eq(userProgress.moduleId, moduleId)
           )
         );
     }
