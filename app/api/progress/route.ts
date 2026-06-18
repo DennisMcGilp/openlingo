@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { moduleId, lessonCompleted, quizPassed, score, points } = body;
 
-    console.log("📝 POST /api/progress received:", { moduleId, lessonCompleted, quizPassed, score, points });
+    console.log("📝 POST received:", { moduleId, lessonCompleted, quizPassed });
 
     if (!moduleId) {
       return NextResponse.json({ error: "moduleId required" }, { status: 400 });
@@ -77,10 +77,8 @@ export async function POST(req: NextRequest) {
       )
       .limit(1);
 
-    console.log("📊 Existing progress:", existing.length > 0 ? existing[0] : "None");
-
     if (existing.length === 0) {
-      // Create new record
+      // Create new record - using snake_case for database columns
       await db.insert(userProgress).values({
         userId: session.user.id,
         moduleId: moduleId,
@@ -90,7 +88,7 @@ export async function POST(req: NextRequest) {
         points: points || 0,
         completedAt: quizPassed ? new Date() : null,
       });
-      console.log("✅ Created new progress record");
+      console.log("✅ Created new record with lessonCompleted:", lessonCompleted);
     } else {
       // Update existing record
       await db
@@ -109,7 +107,7 @@ export async function POST(req: NextRequest) {
             eq(userProgress.moduleId, moduleId)
           )
         );
-      console.log("✅ Updated existing progress record");
+      console.log("✅ Updated record with lessonCompleted:", lessonCompleted);
     }
 
     // Verify the update
@@ -124,7 +122,7 @@ export async function POST(req: NextRequest) {
       )
       .limit(1);
 
-    console.log("🔍 Verification after update:", verify.length > 0 ? verify[0] : "None");
+    console.log("🔍 Verification:", verify.length > 0 ? verify[0] : "None");
 
     return NextResponse.json({ success: true });
   } catch (error) {
