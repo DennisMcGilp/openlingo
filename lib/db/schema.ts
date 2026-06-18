@@ -29,7 +29,8 @@ export const userProgress = pgTable("user_progress", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
   moduleId: text("module_id").notNull(),
-  lessonCompleted: boolean("lesson_completed").default(false),
+  // Replace lessonCompleted (single boolean) with a JSON array of completed lesson IDs
+  completedLessons: jsonb("completed_lessons").default([]).$type<string[]>(),
   quizPassed: boolean("quiz_passed").default(false),
   score: integer("score"),
   points: integer("points").default(0),
