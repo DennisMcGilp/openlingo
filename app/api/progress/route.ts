@@ -109,3 +109,30 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Failed to save progress" }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const session = await requireSession();
+    const body = await req.json();
+    const { moduleId } = body;
+
+    if (!moduleId) {
+      return NextResponse.json({ error: "moduleId required" }, { status: 400 });
+    }
+
+    await db
+      .delete(userProgress)
+      .where(
+        and(
+          eq(userProgress.userId, session.user.id),
+          eq(userProgress.moduleId, moduleId)
+        )
+      );
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting progress:", error);
+    return NextResponse.json({ error: "Failed to delete progress" }, { status: 500 });
+  }
+}
+

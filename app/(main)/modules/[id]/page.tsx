@@ -276,7 +276,35 @@ export default function ModuleDetailPage() {
       setSaving(false);
     }
   }
-
+  async function resetProgress() {
+  if (!moduleData) return;
+  if (!confirm("Are you sure you want to reset all progress for this module?")) return;
+ 
+  setSaving(true);
+ 
+  try {
+    // Delete the progress record from the database
+    await fetch("/api/progress", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        moduleId,
+      }),
+    });
+   
+    // Reload the page to reset all states
+    await loadModuleAndProgress();
+    setQuizStarted(false);
+    setQuizSubmitted(false);
+    setQuizScore(0);
+    setSelectedAnswers([]);
+   
+  } catch (error) {
+    console.error("Failed to reset progress:", error);
+  } finally {
+    setSaving(false);
+  }
+}
   const allLessonsCompleted = moduleData?.lessons.every(l => l.completed) ?? false;
   const canTakeQuiz = allLessonsCompleted && !moduleData?.quizCompleted;
 
@@ -386,30 +414,40 @@ export default function ModuleDetailPage() {
       </div>
 
       <div className="rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 p-6 text-white shadow-lg">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-bold">🏆 Module Quiz</h2>
-            <p className="mt-1 text-white/80">
-              {!allLessonsCompleted
-                ? `Complete all ${moduleData.lessons.length} lessons to unlock the quiz`
-                : moduleData.quizCompleted
-                ? "🎉 You passed the quiz! Module complete!"
-                : "Test your knowledge and earn 100 points!"}
-            </p>
-          </div>
-          <button
-            onClick={() => setShowQuiz(true)}
-            disabled={!canTakeQuiz || saving}
-            className={`rounded-lg px-6 py-3 font-bold transition-colors ${
-              canTakeQuiz
-                ? "bg-white text-purple-600 hover:bg-gray-100"
-                : "cursor-not-allowed bg-gray-400 text-gray-200"
-            }`}
-          >
-            {moduleData.quizCompleted ? "✓ Completed" : "Take Quiz"}
-          </button>
-        </div>
-      </div>
+  <div className="flex items-center justify-between">
+    <div>
+      <h2 className="text-xl font-bold">🏆 Module Quiz</h2>
+      <p className="mt-1 text-white/80">
+        {!allLessonsCompleted
+          ? `Complete all ${moduleData.lessons.length} lessons to unlock the quiz`
+          : moduleData.quizCompleted
+          ? "🎉 You passed the quiz! Module complete!"
+          : "Test your knowledge and earn 100 points!"}
+      </p>
+    </div>
+    <div className="flex gap-2">
+      <button
+        onClick={() => setShowQuiz(true)}
+        disabled={!canTakeQuiz || saving}
+        className={`rounded-lg px-6 py-3 font-bold transition-colors ${
+          canTakeQuiz
+            ? "bg-white text-purple-600 hover:bg-gray-100"
+            : "cursor-not-allowed bg-gray-400 text-gray-200"
+        }`}
+      >
+        {moduleData.quizCompleted ? "✓ Completed" : "Take Quiz"}
+      </button>
+      {/* Add this reset button */}
+      <button
+        onClick={resetProgress}
+        disabled={saving}
+        className="rounded-lg bg-red-500 px-4 py-3 font-bold text-white hover:bg-red-600 transition-colors disabled:opacity-50 text-sm"
+      >
+        🔄 Reset
+      </button>
+    </div>
+  </div>
+</div>
 
       {selectedLesson && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
