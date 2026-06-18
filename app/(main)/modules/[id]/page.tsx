@@ -87,37 +87,37 @@ export default function ModuleDetailPage() {
   }, [session, moduleId]);
 
   async function loadModuleAndProgress() {
-    console.log("🔄 loadModuleAndProgress started");
-    const data = getModuleData(moduleId);
-    if (!data) {
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const res = await fetch(`/api/progress?moduleId=${moduleId}`);
-      console.log("📡 GET /api/progress status:", res.status);
-      const progress = await res.json();
-      console.log("📥 Loaded progress:", progress);
-
-      if (progress.lessonCompleted) {
-        data.lessons = data.lessons.map(lesson => ({ ...lesson, completed: true }));
-      } else {
-        data.lessons = data.lessons.map(lesson => ({ ...lesson, completed: false }));
-      }
-
-      data.quizCompleted = progress.quizPassed || false;
-      data.quizPassed = progress.quizPassed || false;
-
-      setModuleData(data);
-      console.log("✅ Module data updated:", data);
-    } catch (error) {
-      console.error("❌ Failed to load progress:", error);
-      setModuleData(data);
-    }
+  console.log("🔄 loadModuleAndProgress started");
+  const data = getModuleData(moduleId);
+  if (!data) {
     setLoading(false);
+    return;
   }
 
+  try {
+    const res = await fetch(`/api/progress?moduleId=${moduleId}`);
+    const progress = await res.json();
+    console.log("📥 Loaded progress:", progress);
+
+    // Use completedLessons array instead of lessonCompleted boolean
+    const completedIds = progress.completedLessons || [];
+   
+    data.lessons = data.lessons.map(lesson => ({
+      ...lesson,
+      completed: completedIds.includes(lesson.id)
+    }));
+
+    data.quizCompleted = progress.quizPassed || false;
+    data.quizPassed = progress.quizPassed || false;
+
+    setModuleData(data);
+    console.log("✅ Module data updated:", data);
+  } catch (error) {
+    console.error("❌ Failed to load progress:", error);
+    setModuleData(data);
+  }
+  setLoading(false);
+}
   async function completeLesson(lessonId: string) {
     if (!moduleData || saving) return;
     setSaving(true);

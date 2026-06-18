@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
     if (progress.length === 0) {
       return NextResponse.json({
         moduleId,
-        lessonCompleted: false,
+        completedLessons: false,
         quizPassed: false,
         score: 0,
         points: 0,
@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
       id: progress[0].id,
       userId: progress[0].userId,
       moduleId: progress[0].moduleId,
-      lessonCompleted: progress[0].lessonCompleted,
+      completedLessons: progress[0].lessonCompleted,
       quizPassed: progress[0].quizPassed,
       score: progress[0].score,
       points: progress[0].points,
