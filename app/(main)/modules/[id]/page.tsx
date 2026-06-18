@@ -87,77 +87,73 @@ export default function ModuleDetailPage() {
   }, [session, moduleId]);
 
   async function loadModuleAndProgress() {
-  console.log("🔄 loadModuleAndProgress started");
-  const data = getModuleData(moduleId);
-  if (!data) {
+    const data = getModuleData(moduleId);
+    if (!data) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/progress?moduleId=${moduleId}`);
+      const progress = await res.json();
+      console.log("Loaded progress:", progress);
+
+      const completedIds = progress.completedLessons || [];
+     
+      data.lessons = data.lessons.map(lesson => ({
+        ...lesson,
+        completed: completedIds.includes(lesson.id)
+      }));
+
+      data.quizCompleted = progress.quizPassed || false;
+      data.quizPassed = progress.quizPassed || false;
+
+      setModuleData(data);
+    } catch (error) {
+      console.error("Failed to load progress:", error);
+      setModuleData(data);
+    }
     setLoading(false);
-    return;
   }
-
-  try {
-    const res = await fetch(`/api/progress?moduleId=${moduleId}`);
-    const progress = await res.json();
-    console.log("📥 Loaded progress:", progress);
-
-    // Use completedLessons array
-    const completedIds = progress.completedLessons || [];
-   
-    data.lessons = data.lessons.map(lesson => ({
-      ...lesson,
-      completed: completedIds.includes(lesson.id)
-    }));
-
-    data.quizCompleted = progress.quizPassed || false;
-    data.quizPassed = progress.quizPassed || false;
-
-    setModuleData(data);
-    console.log("✅ Module data updated:", data);
-  } catch (error) {
-    console.error("❌ Failed to load progress:", error);
-    setModuleData(data);
-  }
-  setLoading(false);
-}
 
   async function completeLesson(lessonId: string) {
     if (!moduleData || saving) return;
     setSaving(true);
 
-    console.log("1. Starting completeLesson for:", lessonId);
+    // Get current completed lessons
+    const currentCompleted = moduleData.lessons
+      .filter(l => l.completed)
+      .map(l => l.id);
+   
+    const updatedCompleted = currentCompleted.includes(lessonId)
+      ? currentCompleted
+      : [...currentCompleted, lessonId];
 
+    // Optimistic update
     const updatedLessons = moduleData.lessons.map(lesson =>
       lesson.id === lessonId ? { ...lesson, completed: true } : lesson
     );
-    const allCompleted = updatedLessons.every(l => l.completed);
-    console.log("2. All lessons completed?", allCompleted);
     setModuleData({ ...moduleData, lessons: updatedLessons });
 
     try {
-      console.log("3. Sending POST request to /api/progress");
       const response = await fetch("/api/progress", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           moduleId,
-          lessonCompleted: allCompleted,
+          completedLessons: updatedCompleted,
         }),
       });
 
-      console.log("4. POST response status:", response.status);
       const result = await response.json();
-      console.log("5. POST response data:", result);
-
+     
       if (result.success) {
-        console.log("6. Success! Reloading progress...");
         await loadModuleAndProgress();
-      } else {
-        console.log("6. Server returned success: false");
       }
     } catch (error) {
-      console.error("7. Error in completeLesson:", error);
+      console.error("Error in completeLesson:", error);
       await loadModuleAndProgress();
     } finally {
-      console.log("8. Setting saving to false");
       setSaving(false);
     }
   }
@@ -185,7 +181,6 @@ export default function ModuleDetailPage() {
           points: passed ? moduleData.totalPoints : 0,
         }),
       });
-
       await loadModuleAndProgress();
     } catch (error) {
       console.error("Failed to save quiz progress:", error);

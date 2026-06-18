@@ -59,13 +59,10 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { moduleId, completedLessons, quizPassed, score, points } = body;
 
-    console.log("📝 POST received:", { moduleId, completedLessons, quizPassed });
-
     if (!moduleId) {
       return NextResponse.json({ error: "moduleId required" }, { status: 400 });
     }
 
-    // Check if progress record exists
     const existing = await db
       .select()
       .from(userProgress)
@@ -78,7 +75,6 @@ export async function POST(req: NextRequest) {
       .limit(1);
 
     if (existing.length === 0) {
-      // Create new record
       await db.insert(userProgress).values({
         userId: session.user.id,
         moduleId: moduleId,
@@ -88,9 +84,7 @@ export async function POST(req: NextRequest) {
         points: points || 0,
         completedAt: quizPassed ? new Date() : null,
       });
-      console.log("✅ Created new record with completedLessons:", completedLessons);
     } else {
-      // Update existing record
       await db
         .update(userProgress)
         .set({
@@ -107,12 +101,11 @@ export async function POST(req: NextRequest) {
             eq(userProgress.moduleId, moduleId)
           )
         );
-      console.log("✅ Updated record with completedLessons:", completedLessons);
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("❌ Error saving progress:", error);
+    console.error("Error saving progress:", error);
     return NextResponse.json({ error: "Failed to save progress" }, { status: 500 });
   }
 }
