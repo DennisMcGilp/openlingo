@@ -99,7 +99,7 @@ export default function ModuleDetailPage() {
     const progress = await res.json();
     console.log("📥 Loaded progress:", progress);
 
-    // Use completedLessons array instead of lessonCompleted boolean
+    // Use completedLessons array
     const completedIds = progress.completedLessons || [];
    
     data.lessons = data.lessons.map(lesson => ({
@@ -118,6 +118,7 @@ export default function ModuleDetailPage() {
   }
   setLoading(false);
 }
+
   async function completeLesson(lessonId: string) {
     if (!moduleData || saving) return;
     setSaving(true);
