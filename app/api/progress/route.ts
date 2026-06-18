@@ -19,8 +19,8 @@ export async function GET(req: NextRequest) {
       .from(userProgress)
       .where(
         and(
-          eq(userProgress.userId, session.user.id),  // Use camelCase property name
-          eq(userProgress.moduleId, moduleId)        // Use camelCase property name
+          eq(userProgress.userId, session.user.id),
+          eq(userProgress.moduleId, moduleId)
         )
       )
       .limit(1);
@@ -35,8 +35,6 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // Drizzle automatically maps camelCase to snake_case in the database
-    // So we can return the object directly
     return NextResponse.json({
       id: progress[0].id,
       userId: progress[0].userId,
@@ -61,6 +59,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { moduleId, lessonCompleted, quizPassed, score, points } = body;
 
+    console.log("📝 POST /api/progress received:", { moduleId, lessonCompleted, quizPassed, score, points });
+
     if (!moduleId) {
       return NextResponse.json({ error: "moduleId required" }, { status: 400 });
     }
@@ -71,14 +71,16 @@ export async function POST(req: NextRequest) {
       .from(userProgress)
       .where(
         and(
-          eq(userProgress.userId, session.user.id),  // Use camelCase property name
-          eq(userProgress.moduleId, moduleId)        // Use camelCase property name
+          eq(userProgress.userId, session.user.id),
+          eq(userProgress.moduleId, moduleId)
         )
       )
       .limit(1);
 
+    console.log("📊 Existing progress:", existing.length > 0 ? existing[0] : "None");
+
     if (existing.length === 0) {
-      // Create new record using camelCase property names
+      // Create new record
       await db.insert(userProgress).values({
         userId: session.user.id,
         moduleId: moduleId,
@@ -88,8 +90,9 @@ export async function POST(req: NextRequest) {
         points: points || 0,
         completedAt: quizPassed ? new Date() : null,
       });
+      console.log("✅ Created new progress record");
     } else {
-      // Update existing record using camelCase property names
+      // Update existing record
       await db
         .update(userProgress)
         .set({
@@ -106,11 +109,26 @@ export async function POST(req: NextRequest) {
             eq(userProgress.moduleId, moduleId)
           )
         );
+      console.log("✅ Updated existing progress record");
     }
+
+    // Verify the update
+    const verify = await db
+      .select()
+      .from(userProgress)
+      .where(
+        and(
+          eq(userProgress.userId, session.user.id),
+          eq(userProgress.moduleId, moduleId)
+        )
+      )
+      .limit(1);
+
+    console.log("🔍 Verification after update:", verify.length > 0 ? verify[0] : "None");
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error saving progress:", error);
+    console.error("❌ Error saving progress:", error);
     return NextResponse.json({ error: "Failed to save progress" }, { status: 500 });
   }
 }

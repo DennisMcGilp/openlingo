@@ -28,10 +28,10 @@ export const user = pgTable("user", {
 export const userProgress = pgTable("user_progress", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
-  moduleId: text("module_id").notNull(), // e.g., "ket_module_1"
+  moduleId: text("module_id").notNull(),
   lessonCompleted: boolean("lesson_completed").default(false),
   quizPassed: boolean("quiz_passed").default(false),
-  score: integer("score"), // Quiz score percentage
+  score: integer("score"),
   points: integer("points").default(0),
   completedAt: timestamp("completed_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
