@@ -1,7 +1,11 @@
 import type { BetterAuthPlugin } from "better-auth";
-import { createAuthMiddleware } from "better-auth";
 import { APIError } from "better-auth";
 import { verifyTurnstileToken } from "./turnstile";
+
+// Simple middleware creator
+function createAuthMiddleware(handler: any) {
+  return handler;
+}
 
 export const turnstilePlugin = (): BetterAuthPlugin => {
   return {
@@ -9,13 +13,13 @@ export const turnstilePlugin = (): BetterAuthPlugin => {
     hooks: {
       before: [
         {
-          matcher: (context) => {
+          matcher: (context: any) => {
             return (
               context.path === "/sign-in/email" ||
               context.path === "/sign-up/email"
             );
           },
-          handler: createAuthMiddleware(async (ctx) => {
+          handler: createAuthMiddleware(async (ctx: any) => {
             const token = ctx.headers?.get("x-turnstile-token") ?? "";
             const result = await verifyTurnstileToken(token);
 

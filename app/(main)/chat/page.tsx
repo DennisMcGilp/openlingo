@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { requireSession } from "@/lib/auth-server";
-import { ChatView } from "@/components/chat-view";
+import { ChatView } from "@/components/chat/chat-view";
 import {
   getTargetLanguage,
   getPreferredModel,
