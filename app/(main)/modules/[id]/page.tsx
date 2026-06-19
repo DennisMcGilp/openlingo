@@ -426,25 +426,56 @@ export default function ModuleDetailPage() {
       </p>
     </div>
     <div className="flex gap-2">
-      <button
-        onClick={() => setShowQuiz(true)}
-        disabled={!canTakeQuiz || saving}
-        className={`rounded-lg px-6 py-3 font-bold transition-colors ${
-          canTakeQuiz
-            ? "bg-white text-purple-600 hover:bg-gray-100"
-            : "cursor-not-allowed bg-gray-400 text-gray-200"
-        }`}
-      >
-        {moduleData.quizCompleted ? "✓ Completed" : "Take Quiz"}
-      </button>
-      {/* Add this reset button */}
-      <button
-        onClick={resetProgress}
-        disabled={saving}
-        className="rounded-lg bg-red-500 px-4 py-3 font-bold text-white hover:bg-red-600 transition-colors disabled:opacity-50 text-sm"
-      >
-        🔄 Reset
-      </button>
+     <button
+  onClick={() => {
+    let prompt = "";
+   
+    if (selectedLesson.id === "lesson_1") {
+      prompt = `Let's practice English greetings. I will teach you:
+      - Hello (neutral)
+      - Hi / Hey (informal)
+      - Good morning (before 12 PM)
+      - Good afternoon (12 PM - 6 PM)
+      - Good evening (after 6 PM)
+      - Good day (formal)
+
+      STEP 1: I will ask you to greet me at different times of day.
+      STEP 2: You practice responding with the correct greeting.
+      STEP 3: When you have successfully greeted me 5 times, say "I'm ready to complete the lesson!"
+     
+      Let's start. It's 9 AM. How do you greet someone?`;
+    } else if (selectedLesson.id === "lesson_2") {
+      prompt = `Let's practice introducing yourself in English. I will teach you three ways:
+      1. "My name is [name]." (formal)
+      2. "I am [name]." (neutral)
+      3. "I'm [name]." (informal)
+
+      STEP 1: I will ask you to introduce yourself in different ways.
+      STEP 2: You practice each style.
+      STEP 3: When you have successfully introduced yourself 3 ways, say "I'm ready to complete the lesson!"
+     
+      Start by introducing yourself formally.`;
+    } else if (selectedLesson.id === "lesson_3") {
+      prompt = `Let's practice asking questions in English. I will teach you:
+      - "What is your name?" / "What's your name?" (formal/casual)
+      - "How old are you?"
+      - "Where are you from?"
+      - "How are you?"
+
+      STEP 1: I will ask you questions.
+      STEP 2: You respond correctly.
+      STEP 3: When you have answered 5 questions correctly, say "I'm ready to complete the lesson!"
+     
+      Let's start. Ask me "What is your name?"`;
+    }
+   
+    router.push(`/chat?prompt=${encodeURIComponent(prompt)}`);
+    setSelectedLesson(null);
+  }}
+  className="mt-3 w-full rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+>
+  Open AI Tutor
+</button>
     </div>
   </div>
 </div>
@@ -477,6 +508,13 @@ export default function ModuleDetailPage() {
                       </p>
                     </div>
                   </div>
+                {selectedLesson.type === "speaking" && (
+  <div className="mt-3 rounded-lg bg-green-50 p-3">
+    <p className="text-xs text-green-700">
+      🎤 <strong>Speaking Practice:</strong> Say your answers out loud to practice speaking.
+      You can type your responses to check if they're correct.
+    </p>
+  </div>
                 )}
 
                 {selectedLesson.id === "lesson_2" && (
@@ -642,21 +680,51 @@ export default function ModuleDetailPage() {
                 <p className="mt-1 text-sm text-blue-500">💡 Select all correct answers</p>
               )}
               <div className="mt-4 space-y-2">
-                {moduleData?.quiz[currentQuestionIndex]?.options.map((option, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => selectAnswer(idx)}
-                    className={`w-full rounded-lg border-2 p-3 text-left transition-all ${
-                      selectedAnswers[currentQuestionIndex] === idx
-                        ? "border-purple-500 bg-purple-50"
-                        : "border-gray-200 hover:border-purple-300"
-                    }`}
-                  >
-                    <span className="font-medium">{String.fromCharCode(65 + idx)}.</span> {option}
-                  </button>
-                ))}
-              </div>
-            </div>
+  {moduleData?.quiz[currentQuestionIndex]?.options.map((option, idx) => {
+    const isMultiple = moduleData?.quiz[currentQuestionIndex]?.correctAnswers.length > 1;
+    const isSelected = selectedAnswers[currentQuestionIndex] === idx;
+   
+    return (
+      <button
+        key={idx}
+        onClick={() => {
+          if (isMultiple) {
+            // For multiple choice: toggle selection
+            const currentSelected = selectedAnswers[currentQuestionIndex] !== undefined
+              ? selectedAnswers[currentQuestionIndex]
+              : -1;
+            if (currentSelected === idx) {
+              // Deselect if already selected
+              const newAnswers = [...selectedAnswers];
+              newAnswers[currentQuestionIndex] = -1;
+              setSelectedAnswers(newAnswers);
+            } else {
+              // Select this option
+              const newAnswers = [...selectedAnswers];
+              newAnswers[currentQuestionIndex] = idx;
+              setSelectedAnswers(newAnswers);
+            }
+          } else {
+            // For single choice: just select
+            const newAnswers = [...selectedAnswers];
+            newAnswers[currentQuestionIndex] = idx;
+            setSelectedAnswers(newAnswers);
+          }
+        }}
+        className={`w-full rounded-lg border-2 p-3 text-left transition-all ${
+          isSelected
+            ? "border-purple-500 bg-purple-50"
+            : "border-gray-200 hover:border-purple-300"
+        }`}
+      >
+        <span className="font-medium">{String.fromCharCode(65 + idx)}.</span> {option}
+        {isMultiple && isSelected && (
+          <span className="ml-2 text-purple-500">✓</span>
+        )}
+      </button>
+    );
+  })}
+</div>
             <div className="mt-6 flex justify-end">
               <button
                 onClick={nextQuestion}
