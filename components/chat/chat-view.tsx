@@ -86,45 +86,32 @@ export function ChatView({
 
   // Speech-to-Text: Start listening
   const startListening = (onResult: (text: string) => void) => {
-  if (typeof window === "undefined") return;
+    if (typeof window === "undefined") return;
 
-  const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
- 
-  if (!SpeechRecognition) {
-    alert("Speech recognition is not supported in this browser. Please use Chrome or Edge.");
-    return;
-  }
-
-  const recognition = new SpeechRecognition();
-  recognition.lang = "en-US";
-  recognition.continuous = false;
-  recognition.interimResults = true;
-
-  recognition.onresult = (event: any) => {
-    const currentTranscript = Array.from(event.results)
-      .map((result: any) => result[0].transcript)
-      .join("");
-    setTranscript(currentTranscript);
-
-    if (event.results[0].isFinal) {
-      onResult(currentTranscript);
-      setTranscript("");
-      setIsListening(false);
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+   
+    if (!SpeechRecognition) {
+      alert("Speech recognition is not supported in this browser. Please use Chrome or Edge.");
+      return;
     }
-  };
 
-  recognition.onerror = () => {
-    setIsListening(false);
-  };
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.continuous = false;
+    recognition.interimResults = true;
 
-  recognition.onend = () => {
-    setIsListening(false);
-  };
+    recognition.onresult = (event: any) => {
+      const currentTranscript = Array.from(event.results)
+        .map((result: any) => result[0].transcript)
+        .join("");
+      setTranscript(currentTranscript);
 
-  recognition.start();
-  setIsListening(true);
-  recognitionRef.current = recognition;
-};
+      if (event.results[0].isFinal) {
+        onResult(currentTranscript);
+        setTranscript("");
+        setIsListening(false);
+      }
+    };
 
     recognition.onerror = () => {
       setIsListening(false);
@@ -225,7 +212,7 @@ export function ChatView({
     prevKeyboardOpen.current = isKeyboardOpen;
   }, [isKeyboardOpen, scrollToBottom]);
 
-  // Auto-send initial prompt (e.g. from "New Unit" / "New Article" buttons)
+  // Auto-send initial prompt
   const promptSent = useRef(false);
   useEffect(() => {
     if (
