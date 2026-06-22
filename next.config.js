@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Empty turbopack config to silence the warning
+  turbopack: {},
+ 
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {
