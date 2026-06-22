@@ -14,6 +14,13 @@ import type { Exercise } from "@/lib/content/types";
 import { useIsMobile } from "@/hooks/use-media-query";
 import { useMobileKeyboardOpen } from "@/hooks/use-mobile-keyboard-open";
 
+declare global {
+  interface Window {
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
+  }
+}
+
 interface ChatViewProps {
   language?: string;
   preferredModel: string;
@@ -79,31 +86,45 @@ export function ChatView({
 
   // Speech-to-Text: Start listening
   const startListening = (onResult: (text: string) => void) => {
-    if (typeof window === "undefined") return;
+  if (typeof window === "undefined") return;
 
-    if (!("webkitSpeechRecognition" in window) && !("SpeechRecognition" in window)) {
-      alert("Speech recognition is not supported in this browser. Please use Chrome or Edge.");
-      return;
+  const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+ 
+  if (!SpeechRecognition) {
+    alert("Speech recognition is not supported in this browser. Please use Chrome or Edge.");
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+  recognition.lang = "en-US";
+  recognition.continuous = false;
+  recognition.interimResults = true;
+
+  recognition.onresult = (event: any) => {
+    const currentTranscript = Array.from(event.results)
+      .map((result: any) => result[0].transcript)
+      .join("");
+    setTranscript(currentTranscript);
+
+    if (event.results[0].isFinal) {
+      onResult(currentTranscript);
+      setTranscript("");
+      setIsListening(false);
     }
+  };
 
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-    recognition.lang = "en-US";
-    recognition.continuous = false;
-    recognition.interimResults = true;
+  recognition.onerror = () => {
+    setIsListening(false);
+  };
 
-    recognition.onresult = (event: any) => {
-      const currentTranscript = Array.from(event.results)
-        .map((result: any) => result[0].transcript)
-        .join("");
-      setTranscript(currentTranscript);
+  recognition.onend = () => {
+    setIsListening(false);
+  };
 
-      if (event.results[0].isFinal) {
-        onResult(currentTranscript);
-        setTranscript("");
-        setIsListening(false);
-      }
-    };
+  recognition.start();
+  setIsListening(true);
+  recognitionRef.current = recognition;
+};
 
     recognition.onerror = () => {
       setIsListening(false);
