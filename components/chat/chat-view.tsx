@@ -69,7 +69,7 @@ const speak = (text: string) => {
 const startListening = (onResult: (text: string) => void) => {
   if (typeof window === 'undefined') return;
  
-  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window')) {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
     alert('Speech recognition is not supported in this browser. Please use Chrome or Edge.');
     return;
   }
