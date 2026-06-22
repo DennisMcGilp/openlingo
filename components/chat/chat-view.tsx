@@ -156,7 +156,18 @@ const stopListening = () => {
       convIdRef.current = newId;
       router.replace(`/chat/${newId}`);
     }
-};
+
+    // Speak the AI response
+    const lastMessage = allMessages[allMessages.length - 1];
+    if (lastMessage && lastMessage.role === 'assistant' && !isError && !isAbort) {
+      const textParts = lastMessage.parts.filter((p: any) => p.type === 'text');
+      const text = textParts.map((p: any) => p.text).join(' ');
+      if (text) {
+        speak(text);
+      }
+    }
+  };
+
 
     // Speak the AI response
     const lastMessage = allMessages[allMessages.length - 1];
