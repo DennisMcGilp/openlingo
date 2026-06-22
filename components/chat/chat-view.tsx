@@ -156,6 +156,7 @@ const stopListening = () => {
       convIdRef.current = newId;
       router.replace(`/chat/${newId}`);
     }
+};
 
     // Speak the AI response
     const lastMessage = allMessages[allMessages.length - 1];
