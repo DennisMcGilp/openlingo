@@ -10,7 +10,6 @@ import { ThinkingMessage } from "./thinking-message";
 import { createConversation, saveMessages } from "@/lib/actions/chat";
 import { recordChatExerciseResult } from "@/lib/actions/srs";
 import { updatePreferredModel } from "@/lib/actions/preferences";
-
 import type { Exercise } from "@/lib/content/types";
 import { useIsMobile } from "@/hooks/use-media-query";
 import { useMobileKeyboardOpen } from "@/hooks/use-mobile-keyboard-open";
@@ -38,81 +37,6 @@ export function ChatView({
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [input, setInput] = useState("");
-// --- Voice Functionality ---
-  const [isListening, setIsListening] = useState(false);
-  const [transcript, setTranscript] = useState('');
-  const recognitionRef = useRef<any>(null);
-
-// Text-to-Speech: AI speaks responses
-const speak = (text: string) => {
-  if (typeof window === 'undefined') return;
-  if (!window.speechSynthesis) return;
- 
-  window.speechSynthesis.cancel();
- 
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = 'en-US';
-  utterance.rate = 0.9;
-  utterance.pitch = 1;
-  utterance.volume = 1;
- 
-  const voices = window.speechSynthesis.getVoices();
-  const englishVoice = voices.find(v => v.lang.startsWith('en'));
-  if (englishVoice) {
-    utterance.voice = englishVoice;
-  }
- 
-  window.speechSynthesis.speak(utterance);
-};
-
-// Speech-to-Text: Start listening
-const startListening = (onResult: (text: string) => void) => {
-  if (typeof window === 'undefined') return;
- 
-  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-    alert('Speech recognition is not supported in this browser. Please use Chrome or Edge.');
-    return;
-  }
- 
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  const recognition = new SpeechRecognition();
-  recognition.lang = 'en-US';
-  recognition.continuous = false;
-  recognition.interimResults = true;
-
-  recognition.onresult = (event: any) => {
-    const currentTranscript = Array.from(event.results)
-      .map((result: any) => result[0].transcript)
-      .join('');
-    setTranscript(currentTranscript);
-   
-    if (event.results[0].isFinal) {
-      onResult(currentTranscript);
-      setTranscript('');
-      setIsListening(false);
-    }
-  };
-
-  recognition.onerror = () => {
-    setIsListening(false);
-  };
-
-  recognition.onend = () => {
-    setIsListening(false);
-  };
-
-  recognition.start();
-  setIsListening(true);
-  recognitionRef.current = recognition;
-};
-
-const stopListening = () => {
-  if (recognitionRef.current) {
-    recognitionRef.current.stop();
-  }
-  setIsListening(false);
-};
-
   const [model, setModel] = useState(preferredModel);
   const [isAtBottom, setIsAtBottom] = useState(true);
   const isMobile = useIsMobile();
@@ -126,6 +50,81 @@ const stopListening = () => {
   const [chatId] = useState(() => conversationId ?? crypto.randomUUID());
   const convIdRef = useRef<string | null>(conversationId ?? null);
 
+  // --- Voice Functionality ---
+  const [isListening, setIsListening] = useState(false);
+  const [transcript, setTranscript] = useState("");
+  const recognitionRef = useRef<any>(null);
+
+  // Text-to-Speech: AI speaks responses
+  const speak = (text: string) => {
+    if (typeof window === "undefined") return;
+    if (!window.speechSynthesis) return;
+
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "en-US";
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+
+    const voices = window.speechSynthesis.getVoices();
+    const englishVoice = voices.find((v) => v.lang.startsWith("en"));
+    if (englishVoice) {
+      utterance.voice = englishVoice;
+    }
+
+    window.speechSynthesis.speak(utterance);
+  };
+
+  // Speech-to-Text: Start listening
+  const startListening = (onResult: (text: string) => void) => {
+    if (typeof window === "undefined") return;
+
+    if (!("webkitSpeechRecognition" in window) && !("SpeechRecognition" in window)) {
+      alert("Speech recognition is not supported in this browser. Please use Chrome or Edge.");
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.continuous = false;
+    recognition.interimResults = true;
+
+    recognition.onresult = (event: any) => {
+      const currentTranscript = Array.from(event.results)
+        .map((result: any) => result[0].transcript)
+        .join("");
+      setTranscript(currentTranscript);
+
+      if (event.results[0].isFinal) {
+        onResult(currentTranscript);
+        setTranscript("");
+        setIsListening(false);
+      }
+    };
+
+    recognition.onerror = () => {
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognition.start();
+    setIsListening(true);
+    recognitionRef.current = recognition;
+  };
+
+  const stopListening = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+    setIsListening(false);
+  };
+
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
@@ -138,47 +137,37 @@ const stopListening = () => {
     transport,
     id: chatId,
     messages: initialMessages,
-   onFinish: async ({ messages: allMessages, isError, isAbort }) => {
-    if (isError || isAbort) return;
+    onFinish: async ({ messages: allMessages, isError, isAbort }) => {
+      if (isError || isAbort) return;
 
-    if (convIdRef.current) {
-      await saveMessages(convIdRef.current, allMessages);
-    } else {
-      const firstUserMsg = allMessages.find((m) => m.role === "user");
-      const title = firstUserMsg
-        ? (firstUserMsg.parts.find((p) => p.type === "text")?.text ?? "New chat").slice(0, 50)
-        : "New chat";
-      const newId = await createConversation(
-        effectiveLanguage,
-        title,
-        allMessages,
-      );
-      convIdRef.current = newId;
-      router.replace(`/chat/${newId}`);
-    }
-
-    // Speak the AI response
-    const lastMessage = allMessages[allMessages.length - 1];
-    if (lastMessage && lastMessage.role === 'assistant' && !isError && !isAbort) {
-      const textParts = lastMessage.parts.filter((p: any) => p.type === 'text');
-      const text = textParts.map((p: any) => p.text).join(' ');
-      if (text) {
-        speak(text);
+      if (convIdRef.current) {
+        await saveMessages(convIdRef.current, allMessages);
+      } else {
+        const firstUserMsg = allMessages.find((m) => m.role === "user");
+        const title = firstUserMsg
+          ? (firstUserMsg.parts.find((p) => p.type === "text")?.text ?? "New chat").slice(0, 50)
+          : "New chat";
+        const newId = await createConversation(
+          effectiveLanguage,
+          title,
+          allMessages,
+        );
+        convIdRef.current = newId;
+        router.replace(`/chat/${newId}`);
       }
-    }
-  };
 
-
-    // Speak the AI response
-    const lastMessage = allMessages[allMessages.length - 1];
-    if (lastMessage && lastMessage.role === 'assistant' && !isError && !isAbort) {
-      const textParts = lastMessage.parts.filter((p: any) => p.type === 'text');
-      const text = textParts.map((p: any) => p.text).join(' ');
-      if (text) {
-        speak(text);
+      // Speak the AI response
+      const lastMessage = allMessages[allMessages.length - 1];
+      if (lastMessage && lastMessage.role === "assistant" && !isError && !isAbort) {
+        const textParts = lastMessage.parts.filter((p: any) => p.type === "text");
+        const text = textParts.map((p: any) => p.text).join(" ");
+        if (text) {
+          speak(text);
+        }
       }
-    }
-  };
+    },
+  });
+
   const isLoading = status === "streaming" || status === "submitted";
 
   // Scroll management
@@ -210,7 +199,6 @@ const stopListening = () => {
   const prevKeyboardOpen = useRef(false);
   useEffect(() => {
     if (isKeyboardOpen && !prevKeyboardOpen.current) {
-      // Small delay to let the viewport resize settle
       setTimeout(() => scrollToBottom(), 100);
     }
     prevKeyboardOpen.current = isKeyboardOpen;
@@ -266,8 +254,6 @@ const stopListening = () => {
       [toolCallId]: { correct, answer: userAnswer },
     }));
 
-    // Record SRS practice (fire-and-forget) — skip for flashcard-review
-    // since it handles its own SRS update via reviewCard
     if (exercise.type !== "flashcard-review") {
       recordChatExerciseResult(exercise, correct, effectiveLanguage).catch(
         () => {},
@@ -403,12 +389,26 @@ const stopListening = () => {
             className="flex-1 resize-none border-none bg-transparent px-2 py-1.5 text-base text-lingo-text placeholder:text-lingo-text-light/50 focus:outline-none md:text-sm"
             style={{ height: "44px", maxHeight: "200px" }}
           />
+
+          {/* Microphone button */}
+          <button
+            type="button"
+            onClick={isListening ? stopListening : () => startListening((text) => {
+              setInput(text);
+              setTimeout(() => submitForm(), 300);
+            })}
+            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors ${
+              isListening
+                ? "bg-red-500 text-white animate-pulse"
+                : "bg-blue-500 text-white hover:bg-blue-600"
+            }`}
+          >
+            {isListening ? "🔴" : "🎤"}
+          </button>
+
           {isLoading ? (
             <button
               type="button"
-              onClick={() => {
-                /* stop not needed for now */
-              }}
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-lingo-text text-white transition-colors hover:bg-lingo-text/80"
             >
               <svg
@@ -420,22 +420,6 @@ const stopListening = () => {
               </svg>
             </button>
           ) : (
-{/* Microphone button */}
-<button
-  type="button"
-  onClick={isListening ? stopListening : () => startListening((text) => {
-    setInput(text);
-    setTimeout(() => submitForm(), 300);
-  })}
-  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors ${
-    isListening
-      ? 'bg-red-500 text-white animate-pulse'
-      : 'bg-blue-500 text-white hover:bg-blue-600'
-  }`}
->
-  {isListening ? '🔴' : '🎤'}
-</button>
-
             <button
               type="submit"
               disabled={!input.trim()}
