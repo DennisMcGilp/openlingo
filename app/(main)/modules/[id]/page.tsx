@@ -437,10 +437,10 @@ export default function ModuleDetailPage() {
             {!lesson.completed ? (
               <button
                 onClick={() => {
-  setSelectedLesson(lesson);
-  const prompt = getLessonPrompt(lesson.id);
-  router.push(`/chat?prompt=${encodeURIComponent(prompt)}`);
-}}
+                  setSelectedLesson(lesson);
+                  const prompt = getLessonPrompt(lesson.id);
+                  router.push(`/chat?prompt=${encodeURIComponent(prompt)}`);
+                }}
                 disabled={saving}
                 className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-white hover:bg-amber-600 transition-colors disabled:opacity-50"
               >
@@ -566,28 +566,21 @@ export default function ModuleDetailPage() {
               </div>
             )}
 
-            {/* AI Tutor button with custom prompts */}
+            {/* AI Tutor button */}
             <div className="mt-4 rounded-lg bg-blue-50 p-4">
               <p className="text-sm text-blue-800">
-                💡 <strong>AI Activity:</strong> Practice {selectedLesson.type} skills with the AI tutor.
+                💡 <strong>Ready to start?</strong> Click the button below to begin your lesson with the AI tutor.
               </p>
               <button
-                <div className="mt-4 rounded-lg bg-blue-50 p-4">
-  <p className="text-sm text-blue-800">
-    💡 <strong>Ready to start?</strong> Click the button below to begin your lesson with the AI tutor.
-  </p>
-  <button
-    onClick={() => {
-      const prompt = getLessonPrompt(selectedLesson.id);
-      router.push(`/chat?prompt=${encodeURIComponent(prompt)}`);
-      setSelectedLesson(null);
-    }}
-    className="mt-3 w-full rounded-lg bg-lingo-green px-4 py-2 text-white font-bold hover:bg-lingo-green/90"
-  >
-    🚀 Start Lesson with AI
-  </button>
-</div>
-
+                onClick={() => {
+                  const prompt = getLessonPrompt(selectedLesson.id);
+                  router.push(`/chat?prompt=${encodeURIComponent(prompt)}`);
+                  setSelectedLesson(null);
+                }}
+                className="mt-3 w-full rounded-lg bg-lingo-green px-4 py-2 text-white font-bold hover:bg-lingo-green/90"
+              >
+                🚀 Start Lesson with AI
+              </button>
             </div>
 
             <div className="mt-6 flex justify-end gap-3">
