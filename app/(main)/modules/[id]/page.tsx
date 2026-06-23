@@ -112,6 +112,46 @@ const getModuleData = (moduleId: string): ModuleData | null => {
   return null;
 };
 
+function getLessonPrompt(lessonId: string): string {
+  switch (lessonId) {
+    case "lesson_1":
+      return `Welcome to your G.E.L.P. journey! 🎉 Let's start with Lesson 1: Greetings.
+
+I will teach you different ways to say hello in English:
+- Hello (neutral)
+- Hi / Hey (informal)
+- Good morning (before 12 PM)
+- Good afternoon (12 PM - 6 PM)
+- Good evening (after 6 PM)
+
+Let's begin! It's 9 AM. How would you greet someone?`;
+   
+    case "lesson_2":
+      return `Welcome back! 🌟 Let's learn Lesson 2: Introducing Yourself.
+
+You'll learn three ways to say your name:
+1. "My name is [name]." (formal)
+2. "I am [name]." (neutral)
+3. "I'm [name]." (informal)
+
+Start by introducing yourself formally. What is your name?`;
+   
+    case "lesson_3":
+      return `Great job! Let's move to Lesson 3: Asking Questions.
+
+You'll learn how to ask:
+- "What is your name?" (formal)
+- "What's your name?" (casual)
+- "How old are you?"
+- "Where are you from?"
+
+Let's start. Ask me "What is your name?"`;
+   
+    default:
+      return `Let's practice! I'm your G.E.L.P. tutor. How can I help you today?`;
+  }
+}
+
 export default function ModuleDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -396,7 +436,11 @@ export default function ModuleDetailPage() {
             </div>
             {!lesson.completed ? (
               <button
-                onClick={() => setSelectedLesson(lesson)}
+                onClick={() => {
+  setSelectedLesson(lesson);
+  const prompt = getLessonPrompt(lesson.id);
+  router.push(`/chat?prompt=${encodeURIComponent(prompt)}`);
+}}
                 disabled={saving}
                 className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-white hover:bg-amber-600 transition-colors disabled:opacity-50"
               >
@@ -528,55 +572,22 @@ export default function ModuleDetailPage() {
                 💡 <strong>AI Activity:</strong> Practice {selectedLesson.type} skills with the AI tutor.
               </p>
               <button
-                onClick={() => {
-                  let prompt = "";
+                <div className="mt-4 rounded-lg bg-blue-50 p-4">
+  <p className="text-sm text-blue-800">
+    💡 <strong>Ready to start?</strong> Click the button below to begin your lesson with the AI tutor.
+  </p>
+  <button
+    onClick={() => {
+      const prompt = getLessonPrompt(selectedLesson.id);
+      router.push(`/chat?prompt=${encodeURIComponent(prompt)}`);
+      setSelectedLesson(null);
+    }}
+    className="mt-3 w-full rounded-lg bg-lingo-green px-4 py-2 text-white font-bold hover:bg-lingo-green/90"
+  >
+    🚀 Start Lesson with AI
+  </button>
+</div>
 
-                  if (selectedLesson.id === "lesson_1") {
-                    prompt = `Let's practice English greetings. I will teach you:
-                    - Hello (neutral)
-                    - Hi / Hey (informal)
-                    - Good morning (before 12 PM)
-                    - Good afternoon (12 PM - 6 PM)
-                    - Good evening (after 6 PM)
-                    - Good day (formal)
-
-                    STEP 1: I will ask you to greet me at different times of day.
-                    STEP 2: You practice responding with the correct greeting.
-                    STEP 3: When you have successfully greeted me 5 times, say "I'm ready to complete the lesson!"
-                   
-                    Let's start. It's 9 AM. How do you greet someone?`;
-                  } else if (selectedLesson.id === "lesson_2") {
-                    prompt = `Let's practice introducing yourself in English. I will teach you three ways:
-                    1. "My name is [name]." (formal)
-                    2. "I am [name]." (neutral)
-                    3. "I'm [name]." (informal)
-
-                    STEP 1: I will ask you to introduce yourself in different ways.
-                    STEP 2: You practice each style.
-                    STEP 3: When you have successfully introduced yourself 3 ways, say "I'm ready to complete the lesson!"
-                   
-                    Start by introducing yourself formally.`;
-                  } else if (selectedLesson.id === "lesson_3") {
-                    prompt = `Let's practice asking questions in English. I will teach you:
-                    - "What is your name?" / "What's your name?" (formal/casual)
-                    - "How old are you?"
-                    - "Where are you from?"
-                    - "How are you?"
-
-                    STEP 1: I will ask you questions.
-                    STEP 2: You respond correctly.
-                    STEP 3: When you have answered 5 questions correctly, say "I'm ready to complete the lesson!"
-                   
-                    Let's start. Ask me "What is your name?"`;
-                  }
-
-                  router.push(`/chat?prompt=${encodeURIComponent(prompt)}`);
-                  setSelectedLesson(null);
-                }}
-                className="mt-3 w-full rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
-              >
-                Open AI Tutor
-              </button>
             </div>
 
             <div className="mt-6 flex justify-end gap-3">
