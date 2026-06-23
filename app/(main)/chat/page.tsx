@@ -26,6 +26,7 @@ export default async function ChatPage({
       language={language ?? undefined}
       preferredModel={preferredModel}
       availableModels={availableModels}
+      initialPrompt={params.prompt}
     />
   );
 }
