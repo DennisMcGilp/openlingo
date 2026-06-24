@@ -239,6 +239,28 @@ export function ChatView({
     }
   }, [initialPrompt, initialMessages, language, sendMessage]);
 
+// Auto-speak the first AI response
+const firstAssistantMessage = useRef(false);
+useEffect(() => {
+  const lastMessage = messages[messages.length - 1];
+  if (
+    lastMessage &&
+    lastMessage.role === 'assistant' &&
+    !firstAssistantMessage.current &&
+    initialPrompt &&
+    promptSent.current
+  ) {
+    firstAssistantMessage.current = true;
+    const textParts = lastMessage.parts.filter((p: any) => p.type === 'text');
+    const text = textParts.map((p: any) => p.text).join(' ');
+    if (text) {
+      // Speak after a short delay to ensure the message is fully rendered
+      setTimeout(() => speak(text), 300);
+    }
+  }
+}, [messages, initialPrompt, speak]);
+
+
   // Focus input on mount
   useEffect(() => {
     if (!isMobile) {
