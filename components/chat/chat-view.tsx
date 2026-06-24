@@ -159,36 +159,35 @@ export function ChatView({
     transport,
     id: chatId,
     messages: initialMessages,
-    onFinish: async ({ messages: allMessages, isError, isAbort }) => {
-      if (isError || isAbort) return;
+   onFinish: async ({ messages: allMessages, isError, isAbort }) => {
+  if (isError || isAbort) return;
 
-      if (convIdRef.current) {
-        await saveMessages(convIdRef.current, allMessages);
-      } else {
-        const firstUserMsg = allMessages.find((m) => m.role === "user");
-        const title = firstUserMsg
-          ? (firstUserMsg.parts.find((p) => p.type === "text")?.text ?? "New chat").slice(0, 50)
-          : "New chat";
-        const newId = await createConversation(
-          effectiveLanguage,
-          title,
-          allMessages,
-        );
-        convIdRef.current = newId;
-        router.replace(`/chat/${newId}`);
-      }
-    };
+  if (convIdRef.current) {
+    await saveMessages(convIdRef.current, allMessages);
+  } else {
+    const firstUserMsg = allMessages.find((m) => m.role === "user");
+    const title = firstUserMsg
+      ? (firstUserMsg.parts.find((p) => p.type === "text")?.text ?? "New chat").slice(0, 50)
+      : "New chat";
+    const newId = await createConversation(
+      effectiveLanguage,
+      title,
+      allMessages,
+    );
+    convIdRef.current = newId;
+    router.replace(`/chat/${newId}`);
+  }
 
-      // Speak the AI response
-      const lastMessage = allMessages[allMessages.length - 1];
-      if (lastMessage && lastMessage.role === "assistant" && !isError && !isAbort) {
-        const textParts = lastMessage.parts.filter((p: any) => p.type === "text");
-        const text = textParts.map((p: any) => p.text).join(" ");
-        if (text) {
-          speak(text);
-        }
-      }
-    },
+  // Speak the AI response
+  const lastMessage = allMessages[allMessages.length - 1];
+  if (lastMessage && lastMessage.role === "assistant" && !isError && !isAbort) {
+    const textParts = lastMessage.parts.filter((p: any) => p.type === "text");
+    const text = textParts.map((p: any) => p.text).join(" ");
+    if (text) {
+      speak(text);
+    }
+  }
+}, 
   });
 
   const isLoading = status === "streaming" || status === "submitted";
