@@ -115,7 +115,7 @@ const getModuleData = (moduleId: string): ModuleData | null => {
 function getLessonPrompt(lessonId: string): string {
   switch (lessonId) {
     case "lesson_1":
-      return `Welcome to your G.E.L.P. journey! 🎉 Let's start with Lesson 1: Greetings.
+      return `Welcome to your G.E.L.P. journey! Let's start with Lesson 1: Greetings.
 
 I will teach you different ways to say hello in English:
 - Hello (neutral)
@@ -124,20 +124,20 @@ I will teach you different ways to say hello in English:
 - Good afternoon (12 PM - 6 PM)
 - Good evening (after 6 PM)
 
-Let's begin! It's 9 AM. How would you greet someone?`;
+Let's begin! How would you greet someone right now?`;
    
     case "lesson_2":
-      return `Welcome back! 🌟 Let's learn Lesson 2: Introducing Yourself.
+      return `Welcome! Let's learn Lesson 2: Introducing Yourself.
 
 You'll learn three ways to say your name:
 1. "My name is [name]." (formal)
 2. "I am [name]." (neutral)
 3. "I'm [name]." (informal)
 
-Start by introducing yourself formally. What is your name?`;
+Start by introducing yourself. What is your name?`;
    
     case "lesson_3":
-      return `Great job! Let's move to Lesson 3: Asking Questions.
+      return `Great! Let's move to Lesson 3: Asking Questions.
 
 You'll learn how to ask:
 - "What is your name?" (formal)

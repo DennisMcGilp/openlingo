@@ -88,12 +88,25 @@ const finalPrompt = ketPrompt;
     course, // <-- ADD THIS LINE
   });
 
-  const result = streamText({
-    model: getModel("groq", "llama-3.3-70b-versatile"),
-    system: systemPrompt,
-    messages: await convertToModelMessages(messages),
-    stopWhen: stepCountIs(7),
-  });
+const cleanSystemPrompt = systemPrompt + `
 
-  return result.toUIMessageStreamResponse();
-}
+IMPORTANT RULES FOR YOUR RESPONSES:
+1. Never use markdown, asterisks (*), brackets ([ ]), or parentheses for formatting.
+2. Never say things like "[multiple-choice]" or "*correct*".
+3. Never use emojis (😊, 🌞, 🎉, etc.) — use plain words only.
+4. Keep your responses simple and clear.
+5. Use plain text only.
+
+EXAMPLE OF GOOD RESPONSE: "That is correct! Let's practice with an exercise."
+
+EXAMPLE OF BAD RESPONSE: "*That is correct!* Let's practice with an exercise. [multiple-choice]"`;
+
+// Then use cleanSystemPrompt instead of systemPrompt in the streamText call
+const result = streamText({
+  model: getModel("groq", "llama-3.3-70b-versatile"),
+  system: cleanSystemPrompt,  // <-- CHANGE THIS
+  messages: await convertToModelMessages(messages),
+  stopWhen: stepCountIs(7),
+});
+
+return result.toUIMessageStreamResponse();

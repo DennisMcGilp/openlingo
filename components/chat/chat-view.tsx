@@ -64,25 +64,38 @@ export function ChatView({
 
   // Text-to-Speech: AI speaks responses
   const speak = (text: string) => {
-    if (typeof window === "undefined") return;
-    if (!window.speechSynthesis) return;
+  if (typeof window === "undefined") return;
+  if (!window.speechSynthesis) return;
 
-    window.speechSynthesis.cancel();
+  window.speechSynthesis.cancel();
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "en-US";
-    utterance.rate = 0.9;
-    utterance.pitch = 1;
-    utterance.volume = 1;
+  // Clean the text - remove emojis and special characters
+  const cleanText = text
+    .replace(/[^\w\s.,!?' ]/g, '') // Remove emojis and special characters
+    .replace(/\s+/g, ' ') // Remove extra spaces
+    .trim();
 
-    const voices = window.speechSynthesis.getVoices();
-    const englishVoice = voices.find((v) => v.lang.startsWith("en"));
-    if (englishVoice) {
-      utterance.voice = englishVoice;
-    }
+  if (!cleanText) return;
 
-    window.speechSynthesis.speak(utterance);
-  };
+  const utterance = new SpeechSynthesisUtterance(cleanText);
+  utterance.lang = "en-US";
+  utterance.rate = 0.9;
+  utterance.pitch = 1;
+  utterance.volume = 1;
+
+  // Try to find a better voice
+  const voices = window.speechSynthesis.getVoices();
+  const preferredVoice = voices.find(v =>
+    v.lang.startsWith('en') &&
+    (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Premium'))
+  ) || voices.find(v => v.lang.startsWith('en'));
+ 
+  if (preferredVoice) {
+    utterance.voice = preferredVoice;
+  }
+
+  window.speechSynthesis.speak(utterance);
+};
 
   // Speech-to-Text: Start listening
   const startListening = (onResult: (text: string) => void) => {
