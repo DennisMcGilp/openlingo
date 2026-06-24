@@ -97,6 +97,7 @@ export function ChatView({
   window.speechSynthesis.speak(utterance);
 };
 
+
   // Speech-to-Text: Start listening
   const startListening = (onResult: (text: string) => void) => {
     if (typeof window === "undefined") return;
@@ -176,6 +177,7 @@ export function ChatView({
         convIdRef.current = newId;
         router.replace(`/chat/${newId}`);
       }
+    };
 
       // Speak the AI response
       const lastMessage = allMessages[allMessages.length - 1];
