@@ -436,11 +436,13 @@ export default function ModuleDetailPage() {
             </div>
             {!lesson.completed ? (
               <button
-                onClick={() => {
-                  setSelectedLesson(lesson);
-                  const prompt = getLessonPrompt(lesson.id);
-                  router.push(`/chat?prompt=${encodeURIComponent(prompt)}`);
-                }}
+               onClick={() => {
+  setSelectedLesson(lesson);
+  const prompt = getLessonPrompt(lesson.id);
+  // Store a flag that tells the chat to speak the first message
+  sessionStorage.setItem('speakOnLoad', 'true');
+  router.push(`/chat?prompt=${encodeURIComponent(prompt)}`);
+}} 
                 disabled={saving}
                 className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-white hover:bg-amber-600 transition-colors disabled:opacity-50"
               >

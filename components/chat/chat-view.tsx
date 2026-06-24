@@ -188,39 +188,34 @@ export function ChatView({
 
   const isLoading = status === "streaming" || status === "submitted";
 
- // Auto-speak AI responses when they appear
+// Auto-speak AI responses when they appear
 const spokenMessages = useRef<Set<string>>(new Set());
 
 useEffect(() => {
-  console.log("🔍 Messages changed, checking for assistant messages...");
-  console.log("🔍 Total messages:", messages.length);
+  const lastMessage = messages[messages.length - 1];
+  if (!lastMessage || lastMessage.role !== "assistant") return;
  
-  // Find the most recent assistant message
-  const assistantMessages = messages.filter((m) => m.role === "assistant");
-  console.log("🔍 Assistant messages found:", assistantMessages.length);
- 
-  if (assistantMessages.length === 0) return;
- 
-  const lastMessage = assistantMessages[assistantMessages.length - 1];
   const messageId = lastMessage.id;
-  console.log("🔍 Last assistant message ID:", messageId);
-  console.log("🔍 Already spoken?", spokenMessages.current.has(messageId));
+  if (spokenMessages.current.has(messageId)) return;
  
-  if (!spokenMessages.current.has(messageId)) {
-    const textParts = lastMessage.parts.filter((p: any) => p.type === "text");
-    const text = textParts.map((p: any) => p.text).join(" ");
-    console.log("🔍 Text to speak:", text);
-   
-    if (text && text.length > 0) {
-      spokenMessages.current.add(messageId);
-      console.log("🔍 Speaking now...");
-      // Speak after a longer delay to ensure everything is ready
-      setTimeout(() => {
-        speak(text);
-      }, 800);
+  const textParts = lastMessage.parts.filter((p: any) => p.type === "text");
+  const text = textParts.map((p: any) => p.text).join(" ");
+  if (!text || text.length === 0) return;
+ 
+  // Check if we should speak on load
+  const shouldSpeak = sessionStorage.getItem('speakOnLoad') === 'true';
+ 
+  if (shouldSpeak || spokenMessages.current.size === 0) {
+    spokenMessages.current.add(messageId);
+    // Clear the flag after using it
+    if (shouldSpeak) {
+      sessionStorage.removeItem('speakOnLoad');
     }
+    setTimeout(() => {
+      speak(text);
+    }, 600);
   }
-}, [messages]);
+}, [messages]); 
 
   // Scroll management
   const scrollToBottom = useCallback((behavior: ScrollBehavior = "instant") => {
