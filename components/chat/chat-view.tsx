@@ -64,48 +64,54 @@ export function ChatView({
 
   // Text-to-Speech: AI speaks responses
   const speak = (text: string) => {
-  if (typeof window === "undefined") return;
-  if (!window.speechSynthesis) return;
+    if (typeof window === "undefined") return;
+    if (!window.speechSynthesis) return;
 
-  window.speechSynthesis.cancel();
+    window.speechSynthesis.cancel();
 
-  // Clean the text - remove emojis and special characters
-  const cleanText = text
-    .replace(/[^\w\s.,!?' ]/g, '') // Remove emojis and special characters
-    .replace(/\s+/g, ' ') // Remove extra spaces
-    .trim();
+    // Clean the text - remove emojis and special characters
+    const cleanText = text
+      .replace(/[^\w\s.,!?' ]/g, "") // Remove emojis and special characters
+      .replace(/\s+/g, " ") // Remove extra spaces
+      .trim();
 
-  if (!cleanText) return;
+    if (!cleanText) return;
 
-  const utterance = new SpeechSynthesisUtterance(cleanText);
-  utterance.lang = "en-US";
-  utterance.rate = 0.9;
-  utterance.pitch = 1;
-  utterance.volume = 1;
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.lang = "en-US";
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+    utterance.volume = 1;
 
-  // Try to find a better voice
-  const voices = window.speechSynthesis.getVoices();
-  const preferredVoice = voices.find(v =>
-    v.lang.startsWith('en') &&
-    (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Premium'))
-  ) || voices.find(v => v.lang.startsWith('en'));
- 
-  if (preferredVoice) {
-    utterance.voice = preferredVoice;
-  }
+    // Try to find a better voice
+    const voices = window.speechSynthesis.getVoices();
+    const preferredVoice =
+      voices.find(
+        (v) =>
+          v.lang.startsWith("en") &&
+          (v.name.includes("Google") ||
+            v.name.includes("Natural") ||
+            v.name.includes("Premium"))
+      ) || voices.find((v) => v.lang.startsWith("en"));
 
-  window.speechSynthesis.speak(utterance);
-};
+    if (preferredVoice) {
+      utterance.voice = preferredVoice;
+    }
 
+    window.speechSynthesis.speak(utterance);
+  };
 
   // Speech-to-Text: Start listening
   const startListening = (onResult: (text: string) => void) => {
     if (typeof window === "undefined") return;
 
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-   
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
     if (!SpeechRecognition) {
-      alert("Speech recognition is not supported in this browser. Please use Chrome or Edge.");
+      alert(
+        "Speech recognition is not supported in this browser. Please use Chrome or Edge."
+      );
       return;
     }
 
@@ -152,45 +158,53 @@ export function ChatView({
       new DefaultChatTransport({
         body: { language: effectiveLanguage, model },
       }),
-    [effectiveLanguage, model],
+    [effectiveLanguage, model]
   );
 
   const { messages, sendMessage, status } = useChat({
     transport,
     id: chatId,
     messages: initialMessages,
-   onFinish: async ({ messages: allMessages, isError, isAbort }) => {
-  if (isError || isAbort) return;
+    onFinish: async ({ messages: allMessages, isError, isAbort }) => {
+      if (isError || isAbort) return;
 
-  if (convIdRef.current) {
-    await saveMessages(convIdRef.current, allMessages);
-  } else {
-    const firstUserMsg = allMessages.find((m) => m.role === "user");
-    const title = firstUserMsg
-      ? (firstUserMsg.parts.find((p) => p.type === "text")?.text ?? "New chat").slice(0, 50)
-      : "New chat";
-    const newId = await createConversation(
-      effectiveLanguage,
-      title,
-      allMessages,
-    );
-    convIdRef.current = newId;
-    router.replace(`/chat/${newId}`);
-  }
-
-  // Speak the AI response
-  const lastMessage = allMessages[allMessages.length - 1];
-  if (lastMessage && lastMessage.role === "assistant" && !isError && !isAbort) {
-    const textParts = lastMessage.parts.filter((p: any) => p.type === "text");
-    const text = textParts.map((p: any) => p.text).join(" ");
-    if (text) {
-      speak(text);
-    }
-  }
-}, 
+      if (convIdRef.current) {
+        await saveMessages(convIdRef.current, allMessages);
+      } else {
+        const firstUserMsg = allMessages.find((m) => m.role === "user");
+        const title = firstUserMsg
+          ? (firstUserMsg.parts.find((p) => p.type === "text")?.text ?? "New chat").slice(0, 50)
+          : "New chat";
+        const newId = await createConversation(
+          effectiveLanguage,
+          title,
+          allMessages
+        );
+        convIdRef.current = newId;
+        router.replace(`/chat/${newId}`);
+      }
+    },
   });
 
   const isLoading = status === "streaming" || status === "submitted";
+
+  // Auto-speak AI responses when they appear
+  const spokenMessages = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage && lastMessage.role === "assistant") {
+      const messageId = lastMessage.id;
+      if (!spokenMessages.current.has(messageId)) {
+        const textParts = lastMessage.parts.filter((p: any) => p.type === "text");
+        const text = textParts.map((p: any) => p.text).join(" ");
+        if (text && text.length > 0) {
+          spokenMessages.current.add(messageId);
+          setTimeout(() => speak(text), 300);
+        }
+      }
+    }
+  }, [messages, speak]);
 
   // Scroll management
   const scrollToBottom = useCallback((behavior: ScrollBehavior = "instant") => {
@@ -236,31 +250,11 @@ export function ChatView({
       language
     ) {
       promptSent.current = true;
-      sendMessage({ text: initialPrompt });
+      setTimeout(() => {
+        sendMessage({ text: initialPrompt });
+      }, 500);
     }
   }, [initialPrompt, initialMessages, language, sendMessage]);
-
-// Auto-speak the first AI response
-const firstAssistantMessage = useRef(false);
-useEffect(() => {
-  const lastMessage = messages[messages.length - 1];
-  if (
-    lastMessage &&
-    lastMessage.role === 'assistant' &&
-    !firstAssistantMessage.current &&
-    initialPrompt &&
-    promptSent.current
-  ) {
-    firstAssistantMessage.current = true;
-    const textParts = lastMessage.parts.filter((p: any) => p.type === 'text');
-    const text = textParts.map((p: any) => p.text).join(' ');
-    if (text) {
-      // Speak after a short delay to ensure the message is fully rendered
-      setTimeout(() => speak(text), 300);
-    }
-  }
-}, [messages, initialPrompt, speak]);
-
 
   // Focus input on mount
   useEffect(() => {
@@ -291,7 +285,7 @@ useEffect(() => {
     toolCallId: string,
     correct: boolean,
     userAnswer: string,
-    exercise: Exercise,
+    exercise: Exercise
   ) {
     setCompletedExercises((prev) => ({
       ...prev,
@@ -300,7 +294,7 @@ useEffect(() => {
 
     if (exercise.type !== "flashcard-review") {
       recordChatExerciseResult(exercise, correct, effectiveLanguage).catch(
-        () => {},
+        () => {}
       );
     }
 
@@ -437,10 +431,15 @@ useEffect(() => {
           {/* Microphone button */}
           <button
             type="button"
-            onClick={isListening ? stopListening : () => startListening((text) => {
-              setInput(text);
-              setTimeout(() => submitForm(), 300);
-            })}
+            onClick={
+              isListening
+                ? stopListening
+                : () =>
+                    startListening((text) => {
+                      setInput(text);
+                      setTimeout(() => submitForm(), 300);
+                    })
+            }
             className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors ${
               isListening
                 ? "bg-red-500 text-white animate-pulse"
