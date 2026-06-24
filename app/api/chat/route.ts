@@ -23,7 +23,6 @@ export async function POST(req: Request) {
     ? requestedModel
     : DEFAULT_CHAT_MODEL;
   const target_language = langCodeToName[language] || language;
-  // const tools = createTools(session.user.id, language);
 
   const [chatTemplate, memoryRow, nativeLang] = await Promise.all([
     getUserPromptTemplate(session.user.id, "chat-system"),
@@ -40,6 +39,7 @@ export async function POST(req: Request) {
       .then((rows) => rows[0]),
     getNativeLanguage(session.user.id),
   ]);
+
   // TEMPORARY: Override with KET-specific prompt (remove once database is updated)
   const ketPrompt = `You are a KET (Key English Test) tutor for A2-level young learners.
 
@@ -66,8 +66,7 @@ Exercise syntax reference: {{exercise_syntax}}
 SRS reference: {{srs_reference}}`;
 
   // Use KET prompt instead of database template
-const finalPrompt = ketPrompt;
-
+  const finalPrompt = ketPrompt;
 
   const memory = memoryRow?.value ?? "";
 
@@ -77,6 +76,7 @@ const finalPrompt = ketPrompt;
   const current_date = `${String(now.getDate()).padStart(2, "0")}-${now.toLocaleString("en-US", { month: "short" })}-${now.getFullYear()}`;
   // TEMPORARY: Hardcode course for KET (remove once course selector is built)
   const course = "KET";
+
   const systemPrompt = interpolateTemplate(finalPrompt, {
     current_date,
     target_language,
@@ -85,10 +85,10 @@ const finalPrompt = ketPrompt;
     memory,
     exercise_syntax: EXERCISE_SYNTAX,
     srs_reference: SRS_REFERENCE,
-    course, // <-- ADD THIS LINE
+    course,
   });
 
-const cleanSystemPrompt = systemPrompt + `
+  const cleanSystemPrompt = systemPrompt + `
 
 IMPORTANT RULES FOR YOUR RESPONSES:
 1. Never use markdown, asterisks (*), brackets ([ ]), or parentheses for formatting.
@@ -101,12 +101,12 @@ EXAMPLE OF GOOD RESPONSE: "That is correct! Let's practice with an exercise."
 
 EXAMPLE OF BAD RESPONSE: "*That is correct!* Let's practice with an exercise. [multiple-choice]"`;
 
-// Then use cleanSystemPrompt instead of systemPrompt in the streamText call
-const result = streamText({
-  model: getModel("groq", "llama-3.3-70b-versatile"),
-  system: cleanSystemPrompt,  // <-- CHANGE THIS
-  messages: await convertToModelMessages(messages),
-  stopWhen: stepCountIs(7),
-});
+  const result = streamText({
+    model: getModel("groq", "llama-3.3-70b-versatile"),
+    system: cleanSystemPrompt,
+    messages: await convertToModelMessages(messages),
+    stopWhen: stepCountIs(7),
+  });
 
-return result.toUIMessageStreamResponse();
+  return result.toUIMessageStreamResponse();
+}
