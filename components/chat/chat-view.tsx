@@ -188,23 +188,34 @@ export function ChatView({
 
   const isLoading = status === "streaming" || status === "submitted";
 
-  // Auto-speak AI responses when they appear
-  const spokenMessages = useRef<Set<string>>(new Set());
+ // Auto-speak AI responses when they appear
+const spokenMessages = useRef<Set<string>>(new Set());
 
-  useEffect(() => {
-    const lastMessage = messages[messages.length - 1];
-    if (lastMessage && lastMessage.role === "assistant") {
-      const messageId = lastMessage.id;
-      if (!spokenMessages.current.has(messageId)) {
-        const textParts = lastMessage.parts.filter((p: any) => p.type === "text");
-        const text = textParts.map((p: any) => p.text).join(" ");
-        if (text && text.length > 0) {
-          spokenMessages.current.add(messageId);
-          setTimeout(() => speak(text), 300);
-        }
-      }
+useEffect(() => {
+  // Find the most recent assistant message
+  const assistantMessages = messages.filter((m) => m.role === "assistant");
+  if (assistantMessages.length === 0) return;
+ 
+  const lastMessage = assistantMessages[assistantMessages.length - 1];
+  const messageId = lastMessage.id;
+ 
+  // Check if we've already spoken this message
+  if (!spokenMessages.current.has(messageId)) {
+    // Extract text from the message
+    const textParts = lastMessage.parts.filter((p: any) => p.type === "text");
+    const text = textParts.map((p: any) => p.text).join(" ");
+   
+    if (text && text.length > 0) {
+      // Mark as spoken before speaking
+      spokenMessages.current.add(messageId);
+     
+      // Wait for the DOM to update and speech synthesis to be ready
+      setTimeout(() => {
+        speak(text);
+      }, 500);
     }
-  }, [messages, speak]);
+  }
+}, [messages]); // Only depend on messages, not speak
 
   // Scroll management
   const scrollToBottom = useCallback((behavior: ScrollBehavior = "instant") => {
