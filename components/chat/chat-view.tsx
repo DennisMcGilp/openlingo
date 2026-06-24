@@ -192,30 +192,35 @@ export function ChatView({
 const spokenMessages = useRef<Set<string>>(new Set());
 
 useEffect(() => {
+  console.log("🔍 Messages changed, checking for assistant messages...");
+  console.log("🔍 Total messages:", messages.length);
+ 
   // Find the most recent assistant message
   const assistantMessages = messages.filter((m) => m.role === "assistant");
+  console.log("🔍 Assistant messages found:", assistantMessages.length);
+ 
   if (assistantMessages.length === 0) return;
  
   const lastMessage = assistantMessages[assistantMessages.length - 1];
   const messageId = lastMessage.id;
+  console.log("🔍 Last assistant message ID:", messageId);
+  console.log("🔍 Already spoken?", spokenMessages.current.has(messageId));
  
-  // Check if we've already spoken this message
   if (!spokenMessages.current.has(messageId)) {
-    // Extract text from the message
     const textParts = lastMessage.parts.filter((p: any) => p.type === "text");
     const text = textParts.map((p: any) => p.text).join(" ");
+    console.log("🔍 Text to speak:", text);
    
     if (text && text.length > 0) {
-      // Mark as spoken before speaking
       spokenMessages.current.add(messageId);
-     
-      // Wait for the DOM to update and speech synthesis to be ready
+      console.log("🔍 Speaking now...");
+      // Speak after a longer delay to ensure everything is ready
       setTimeout(() => {
         speak(text);
-      }, 500);
+      }, 800);
     }
   }
-}, [messages]); // Only depend on messages, not speak
+}, [messages]);
 
   // Scroll management
   const scrollToBottom = useCallback((behavior: ScrollBehavior = "instant") => {
