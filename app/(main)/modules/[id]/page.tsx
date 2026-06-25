@@ -24,7 +24,7 @@ function speakWelcomeMessage(text: string) {
 
   const utterance = new SpeechSynthesisUtterance(cleanText);
   utterance.lang = "en-US";
-  utterance.rate = 0.9;
+  utterance.rate = 0.7; //30% slower than normal
   utterance.pitch = 1;
   utterance.volume = 1;
 
