@@ -79,7 +79,7 @@ export function ChatView({
 
     const utterance = new SpeechSynthesisUtterance(cleanText);
     utterance.lang = "en-US";
-    utterance.rate = 0.7;  // 30% slower
+    utterance.rate = 0.7;  // Make sure it's 0.7
     utterance.pitch = 1;
     utterance.volume = 1;
 

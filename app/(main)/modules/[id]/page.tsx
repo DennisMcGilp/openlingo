@@ -13,8 +13,7 @@ function speakWelcomeMessage(text: string) {
   // Cancel any ongoing speech
   window.speechSynthesis.cancel();
 
-  // Clean the text - keep only the welcome message, remove the question at the end
-  // We want to speak the instructions, not the final question
+  // Clean the text
   const cleanText = text
     .replace(/[^\w\s.,!?' ]/g, "")
     .replace(/\s+/g, " ")
@@ -24,11 +23,10 @@ function speakWelcomeMessage(text: string) {
 
   const utterance = new SpeechSynthesisUtterance(cleanText);
   utterance.lang = "en-US";
-  utterance.rate = 0.7; //30% slower than normal
+  utterance.rate = 0.7;
   utterance.pitch = 1;
   utterance.volume = 1;
 
-  // Try to find a better voice
   const voices = window.speechSynthesis.getVoices();
   const preferredVoice = voices.find(
     (v) =>
@@ -155,7 +153,11 @@ const getModuleData = (moduleId: string): ModuleData | null => {
 function getLessonPrompt(lessonId: string): string {
   switch (lessonId) {
     case "lesson_1":
-      return `Welcome to your G.E.L.P. journey! Let's start with Lesson 1: Greetings.
+      return `Welcome to your G.E.L.P. journey! What is your name?
+
+[Wait for student to respond with their name]
+
+It is a pleasure to meet you, [name]. Let's start with Lesson 1: Greetings.
 
 I will teach you different ways to say hello in English:
 - Hello (neutral)
@@ -167,14 +169,14 @@ I will teach you different ways to say hello in English:
 Now it's your turn. How would you greet someone right now?`;
    
     case "lesson_2":
-      return `Welcome! Let's learn Lesson 2: Introducing Yourself.
+      return `Welcome back! Let's learn Lesson 2: Introducing Yourself.
 
 You'll learn three ways to say your name:
 1. "My name is [name]." (formal)
 2. "I am [name]." (neutral)
 3. "I'm [name]." (informal)
 
-Now it's your turn. What is your name?`;
+Now it's your turn. Introduce yourself using one of these styles.`;
    
     case "lesson_3":
       return `Great! Let's move to Lesson 3: Asking Questions.
@@ -476,15 +478,17 @@ export default function ModuleDetailPage() {
             </div>
             {!lesson.completed ? (
               <button
-              onClick={() => {
+             onClick={() => {
   setSelectedLesson(lesson);
   const prompt = getLessonPrompt(lesson.id);
  
-  // Extract just the instructions (everything before "Now it's your turn")
-  const instructions = prompt.split("Now it's your turn.")[0] + "Now it's your turn.";
+  // Extract the first part (name question) and the rest separately
+  const parts = prompt.split("[Wait for student to respond with their name]");
+  const nameQuestion = parts[0].trim();
+  const restOfLesson = parts[1] ? parts[1].trim() : "";
  
-  // Speak the instructions
-  speakWelcomeMessage(instructions);
+  // Speak only the name question
+  speakWelcomeMessage(nameQuestion);
  
   // Send the full prompt to the AI
   setTimeout(() => {
