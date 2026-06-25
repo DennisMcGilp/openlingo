@@ -5,6 +5,44 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "@/lib/auth-client";
 
+// Helper function to speak text from the lesson page
+function speakWelcomeMessage(text: string) {
+  if (typeof window === "undefined") return;
+  if (!window.speechSynthesis) return;
+
+  // Cancel any ongoing speech
+  window.speechSynthesis.cancel();
+
+  // Clean the text
+  const cleanText = text
+    .replace(/[^\w\s.,!?' ]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!cleanText) return;
+
+  const utterance = new SpeechSynthesisUtterance(cleanText);
+  utterance.lang = "en-US";
+  utterance.rate = 0.9;
+  utterance.pitch = 1;
+  utterance.volume = 1;
+
+  const voices = window.speechSynthesis.getVoices();
+  const preferredVoice = voices.find(
+    (v) =>
+      v.lang.startsWith("en") &&
+      (v.name.includes("Google") ||
+        v.name.includes("Natural") ||
+        v.name.includes("Premium"))
+  ) || voices.find((v) => v.lang.startsWith("en"));
+
+  if (preferredVoice) {
+    utterance.voice = preferredVoice;
+  }
+
+  window.speechSynthesis.speak(utterance);
+}
+
 interface Lesson {
   id: string;
   title: string;
@@ -439,10 +477,15 @@ export default function ModuleDetailPage() {
                onClick={() => {
   setSelectedLesson(lesson);
   const prompt = getLessonPrompt(lesson.id);
-  // Store a flag that tells the chat to speak the first message
-  sessionStorage.setItem('speakOnLoad', 'true');
-  router.push(`/chat?prompt=${encodeURIComponent(prompt)}`);
-}} 
+ 
+  // Speak the welcome message BEFORE redirecting
+  speakWelcomeMessage(prompt);
+ 
+  // Add a small delay to let the speech start before navigating
+  setTimeout(() => {
+    router.push(`/chat?prompt=${encodeURIComponent(prompt)}`);
+  }, 300);
+}}
                 disabled={saving}
                 className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-white hover:bg-amber-600 transition-colors disabled:opacity-50"
               >
