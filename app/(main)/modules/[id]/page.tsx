@@ -13,7 +13,8 @@ function speakWelcomeMessage(text: string) {
   // Cancel any ongoing speech
   window.speechSynthesis.cancel();
 
-  // Clean the text
+  // Clean the text - keep only the welcome message, remove the question at the end
+  // We want to speak the instructions, not the final question
   const cleanText = text
     .replace(/[^\w\s.,!?' ]/g, "")
     .replace(/\s+/g, " ")
@@ -27,6 +28,7 @@ function speakWelcomeMessage(text: string) {
   utterance.pitch = 1;
   utterance.volume = 1;
 
+  // Try to find a better voice
   const voices = window.speechSynthesis.getVoices();
   const preferredVoice = voices.find(
     (v) =>
@@ -162,7 +164,7 @@ I will teach you different ways to say hello in English:
 - Good afternoon (12 PM - 6 PM)
 - Good evening (after 6 PM)
 
-Let's begin! How would you greet someone right now?`;
+Now it's your turn. How would you greet someone right now?`;
    
     case "lesson_2":
       return `Welcome! Let's learn Lesson 2: Introducing Yourself.
@@ -172,7 +174,7 @@ You'll learn three ways to say your name:
 2. "I am [name]." (neutral)
 3. "I'm [name]." (informal)
 
-Start by introducing yourself. What is your name?`;
+Now it's your turn. What is your name?`;
    
     case "lesson_3":
       return `Great! Let's move to Lesson 3: Asking Questions.
@@ -183,7 +185,7 @@ You'll learn how to ask:
 - "How old are you?"
 - "Where are you from?"
 
-Let's start. Ask me "What is your name?"`;
+Now it's your turn. Ask me "What is your name?"`;
    
     default:
       return `Let's practice! I'm your G.E.L.P. tutor. How can I help you today?`;
@@ -474,18 +476,21 @@ export default function ModuleDetailPage() {
             </div>
             {!lesson.completed ? (
               <button
-               onClick={() => {
+              onClick={() => {
   setSelectedLesson(lesson);
   const prompt = getLessonPrompt(lesson.id);
  
-  // Speak the welcome message BEFORE redirecting
-  speakWelcomeMessage(prompt);
+  // Extract just the instructions (everything before "Now it's your turn")
+  const instructions = prompt.split("Now it's your turn.")[0] + "Now it's your turn.";
  
-  // Add a small delay to let the speech start before navigating
+  // Speak the instructions
+  speakWelcomeMessage(instructions);
+ 
+  // Send the full prompt to the AI
   setTimeout(() => {
     router.push(`/chat?prompt=${encodeURIComponent(prompt)}`);
   }, 300);
-}}
+}} 
                 disabled={saving}
                 className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-white hover:bg-amber-600 transition-colors disabled:opacity-50"
               >
