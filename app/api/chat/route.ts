@@ -88,7 +88,7 @@ SRS reference: {{srs_reference}}`;
     course,
   });
 
-  const cleanSystemPrompt = systemPrompt + `
+  const cleanSystemPrompt = `IMPORTANT: You are a KET tutor. NEVER answer your own questions. Always wait for the student to respond before continuing.
 
 IMPORTANT RULES FOR YOUR RESPONSES:
 1. Never use markdown, asterisks (*), brackets ([ ]), or parentheses for formatting.

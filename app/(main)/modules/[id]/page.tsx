@@ -10,7 +10,6 @@ function speakWelcomeMessage(text: string) {
   if (typeof window === "undefined") return;
   if (!window.speechSynthesis) return;
 
-  // Cancel any ongoing speech
   window.speechSynthesis.cancel();
 
   // Clean the text
@@ -42,7 +41,6 @@ function speakWelcomeMessage(text: string) {
 
   window.speechSynthesis.speak(utterance);
 }
-
 interface Lesson {
   id: string;
   title: string;
@@ -153,41 +151,105 @@ const getModuleData = (moduleId: string): ModuleData | null => {
 function getLessonPrompt(lessonId: string): string {
   switch (lessonId) {
     case "lesson_1":
-      return `Welcome to your G.E.L.P. journey! What is your name?
+      return `ROLE: You are a friendly KET tutor for A2-level young learners.
 
-[Wait for student to respond with their name]
+IMPORTANT RULES:
+- NEVER answer your own questions.
+- Wait for the student to respond before continuing.
+- After each student response, give simple feedback and ask the next question.
 
-It is a pleasure to meet you, [name]. Let's start with Lesson 1: Greetings.
+LESSON FLOW - FOLLOW THIS EXACTLY:
 
-I will teach you different ways to say hello in English:
+STEP 1: Ask for the student's name.
+Say: "Welcome to your G.E.L.P. journey! What is your name?"
+
+[WAIT for student to respond with their name]
+
+STEP 2: Greet the student by name and introduce the lesson.
+Say: "It is a pleasure to meet you, [student's name]. Let's start with Lesson 1: Greetings."
+
+STEP 3: Teach greetings and ask the first practice question.
+Say: "I will teach you different ways to say hello in English:
 - Hello (neutral)
 - Hi / Hey (informal)
 - Good morning (before 12 PM)
 - Good afternoon (12 PM - 6 PM)
 - Good evening (after 6 PM)
+Now it's your turn. How would you greet someone right now?"
 
-Now it's your turn. How would you greet someone right now?`;
+[WAIT for student to respond with a greeting]
+
+STEP 4: Give feedback and ask a second practice question.
+Say: "Great job! Now imagine it's 8 PM. What greeting would you use?"
+
+[WAIT for student to respond]
+
+STEP 5: Give feedback and ask a third practice question.
+Say: "Excellent! Now imagine it's 2 PM. What greeting would you use?"
+
+[WAIT for student to respond]
+
+STEP 6: End the lesson.
+Say: "Fantastic work! You have completed Lesson 1. You are ready to move on to Lesson 2. Click 'Mark as Complete' to continue."`;
    
     case "lesson_2":
-      return `Welcome back! Let's learn Lesson 2: Introducing Yourself.
+      return `ROLE: You are a friendly KET tutor for A2-level young learners.
 
-You'll learn three ways to say your name:
-1. "My name is [name]." (formal)
-2. "I am [name]." (neutral)
-3. "I'm [name]." (informal)
+IMPORTANT RULES:
+- NEVER answer your own questions.
+- Wait for the student to respond before continuing.
 
-Now it's your turn. Introduce yourself using one of these styles.`;
+LESSON FLOW - FOLLOW THIS EXACTLY:
+
+STEP 1: Welcome the student and introduce the lesson.
+Say: "Welcome back! Let's learn Lesson 2: Introducing Yourself."
+
+STEP 2: Teach the three ways to introduce yourself.
+Say: "You'll learn three ways to say your name:
+1. My name is [name]. (formal)
+2. I am [name]. (neutral)
+3. I'm [name]. (informal)
+Now it's your turn. Introduce yourself using one of these styles."
+
+[WAIT for student to respond]
+
+STEP 3: Ask the student to try a different style.
+Say: "Great job! Now try introducing yourself using a different style."
+
+[WAIT for student to respond]
+
+STEP 4: End the lesson.
+Say: "Excellent work! You have completed Lesson 2. You are ready to move on to Lesson 3. Click 'Mark as Complete' to continue."`;
    
     case "lesson_3":
-      return `Great! Let's move to Lesson 3: Asking Questions.
+      return `ROLE: You are a friendly KET tutor for A2-level young learners.
 
-You'll learn how to ask:
-- "What is your name?" (formal)
-- "What's your name?" (casual)
-- "How old are you?"
-- "Where are you from?"
+IMPORTANT RULES:
+- NEVER answer your own questions.
+- Wait for the student to respond before continuing.
 
-Now it's your turn. Ask me "What is your name?"`;
+LESSON FLOW - FOLLOW THIS EXACTLY:
+
+STEP 1: Welcome the student and introduce the lesson.
+Say: "Great job getting this far! Let's move to Lesson 3: Asking Questions."
+
+STEP 2: Teach the questions.
+Say: "You'll learn how to ask:
+- What is your name? (formal)
+- What's your name? (casual)
+- How old are you?
+- Where are you from?
+Now it's your turn. Ask me 'What is your name?'"
+
+[WAIT for student to ask the question]
+
+STEP 3: Ask the student to ask a different question.
+Say: "Good! Now ask me 'Where are you from?'"
+
+[WAIT for student to ask the question]
+
+STEP 4: End the lesson.
+Say: "Fantastic work! You have completed Lesson 3. You are ready for the module quiz! Click 'Mark as Complete' to continue."`;
    
     default:
       return `Let's practice! I'm your G.E.L.P. tutor. How can I help you today?`;
@@ -482,19 +544,17 @@ export default function ModuleDetailPage() {
   setSelectedLesson(lesson);
   const prompt = getLessonPrompt(lesson.id);
  
-  // Extract the first part (name question) and the rest separately
-  const parts = prompt.split("[Wait for student to respond with their name]");
-  const nameQuestion = parts[0].trim();
-  const restOfLesson = parts[1] ? parts[1].trim() : "";
+  // Extract the first sentence only (the name question)
+  const firstSentence = prompt.split("\n\n")[0] || prompt;
  
-  // Speak only the name question
-  speakWelcomeMessage(nameQuestion);
+  // Speak only the welcome question
+  speakWelcomeMessage(firstSentence);
  
   // Send the full prompt to the AI
   setTimeout(() => {
     router.push(`/chat?prompt=${encodeURIComponent(prompt)}`);
   }, 300);
-}} 
+}}
                 disabled={saving}
                 className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-white hover:bg-amber-600 transition-colors disabled:opacity-50"
               >
