@@ -5,44 +5,6 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "@/lib/auth-client";
 
-// Helper function to speak text from the lesson page
-function speakWelcomeMessage(text: string) {
-  if (typeof window === "undefined") return;
-  if (!window.speechSynthesis) return;
-
-  // Cancel any ongoing speech
-  window.speechSynthesis.cancel();
-
-  // Clean the text - remove any markdown or special characters
-  const cleanText = text
-    .replace(/[^\w\s.,!?' ]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-
-  if (!cleanText) return;
-
-  const utterance = new SpeechSynthesisUtterance(cleanText);
-  utterance.lang = "en-US";
-  utterance.rate = 0.7;
-  utterance.pitch = 1;
-  utterance.volume = 1;
-
-  // Try to find a good English voice
-  const voices = window.speechSynthesis.getVoices();
-  const preferredVoice = voices.find(
-    (v) =>
-      v.lang.startsWith("en") &&
-      (v.name.includes("Google") ||
-        v.name.includes("Natural") ||
-        v.name.includes("Premium"))
-  ) || voices.find((v) => v.lang.startsWith("en"));
-
-  if (preferredVoice) {
-    utterance.voice = preferredVoice;
-  }
-
-  window.speechSynthesis.speak(utterance);
-}
 
 interface Lesson {
   id: string;
@@ -500,19 +462,7 @@ export default function ModuleDetailPage() {
             {!lesson.completed ? (
               <button
              onClick={() => {
-  setSelectedLesson(lesson);
-  const prompt = getLessonPrompt(lesson.id);
- 
-  // Extract the first sentence only (the name question)
-  const firstSentence = prompt.split("\n\n")[0] || prompt;
- 
-  // Speak only the welcome question
-  speakWelcomeMessage(firstSentence);
- 
-  // Send the full prompt to the AI
-  setTimeout(() => {
-    router.push(`/chat?prompt=${encodeURIComponent(prompt)}`);
-  }, 300);
+  router.push(`/lesson/${lesson.id}`);
 }}
                 disabled={saving}
                 className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-white hover:bg-amber-600 transition-colors disabled:opacity-50"
@@ -646,10 +596,7 @@ export default function ModuleDetailPage() {
               </p>
               <button
                 onClick={() => {
-                  const prompt = getLessonPrompt(selectedLesson.id);
-                  router.push(`/chat?prompt=${encodeURIComponent(prompt)}`);
-                  setSelectedLesson(null);
-                }}
+                  
                 className="mt-3 w-full rounded-lg bg-lingo-green px-4 py-2 text-white font-bold hover:bg-lingo-green/90"
               >
                 🚀 Start Lesson with AI
