@@ -64,42 +64,41 @@ export function ChatView({
 
   // Text-to-Speech: AI speaks responses
   const speak = (text: string) => {
-    if (typeof window === "undefined") return;
-    if (!window.speechSynthesis) return;
+  if (typeof window === "undefined") return;
+  if (!window.speechSynthesis) return;
 
-    window.speechSynthesis.cancel();
+  window.speechSynthesis.cancel();
 
-    // Clean the text - remove emojis and special characters
-    const cleanText = text
-      .replace(/[^\w\s.,!?' ]/g, "") // Remove emojis and special characters
-      .replace(/\s+/g, " ") // Remove extra spaces
-      .trim();
+  // Clean the text
+  const cleanText = text
+    .replace(/[^\w\s.,!?' ]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 
-    if (!cleanText) return;
+  if (!cleanText) return;
 
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.lang = "en-US";
-    utterance.rate = 0.7;  // Make sure it's 0.7
-    utterance.pitch = 1;
-    utterance.volume = 1;
+  const utterance = new SpeechSynthesisUtterance(cleanText);
+  utterance.lang = "en-US";
+  utterance.rate = 0.6; // Slower for clarity
+  utterance.pitch = 1;
+  utterance.volume = 1;
 
-    // Try to find a better voice
-    const voices = window.speechSynthesis.getVoices();
-    const preferredVoice =
-      voices.find(
-        (v) =>
-          v.lang.startsWith("en") &&
-          (v.name.includes("Google") ||
-            v.name.includes("Natural") ||
-            v.name.includes("Premium"))
-      ) || voices.find((v) => v.lang.startsWith("en"));
+  // Try to find a good English voice
+  const voices = window.speechSynthesis.getVoices();
+  const preferredVoice = voices.find(
+    (v) =>
+      v.lang.startsWith("en") &&
+      (v.name.includes("Google") ||
+        v.name.includes("Natural") ||
+        v.name.includes("Premium"))
+  ) || voices.find((v) => v.lang.startsWith("en"));
 
-    if (preferredVoice) {
-      utterance.voice = preferredVoice;
-    }
+  if (preferredVoice) {
+    utterance.voice = preferredVoice;
+  }
 
-    window.speechSynthesis.speak(utterance);
-  };
+  window.speechSynthesis.speak(utterance);
+};
 
   // Speech-to-Text: Start listening
   const startListening = (onResult: (text: string) => void) => {
