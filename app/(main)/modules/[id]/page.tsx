@@ -10,9 +10,10 @@ function speakWelcomeMessage(text: string) {
   if (typeof window === "undefined") return;
   if (!window.speechSynthesis) return;
 
+  // Cancel any ongoing speech
   window.speechSynthesis.cancel();
 
-  // Clean the text
+  // Clean the text - remove any markdown or special characters
   const cleanText = text
     .replace(/[^\w\s.,!?' ]/g, "")
     .replace(/\s+/g, " ")
@@ -26,6 +27,7 @@ function speakWelcomeMessage(text: string) {
   utterance.pitch = 1;
   utterance.volume = 1;
 
+  // Try to find a good English voice
   const voices = window.speechSynthesis.getVoices();
   const preferredVoice = voices.find(
     (v) =>
@@ -41,6 +43,7 @@ function speakWelcomeMessage(text: string) {
 
   window.speechSynthesis.speak(utterance);
 }
+
 interface Lesson {
   id: string;
   title: string;
@@ -151,24 +154,11 @@ const getModuleData = (moduleId: string): ModuleData | null => {
 function getLessonPrompt(lessonId: string): string {
   switch (lessonId) {
     case "lesson_1":
-      return `ROLE: You are a friendly, encouraging KET English tutor for A2-level learners. Your voice is warm and patient. You speak slowly and clearly.
+      return `Hello. I am your friendly AI English Teacher. Welcome to your Global English Language Proficiency journey! What is your name?
 
-CRITICAL RULES - FOLLOW EXACTLY:
-1. NEVER answer your own questions. Always wait for the student to respond.
-2. Only give feedback AFTER the student has responded.
-3. Follow the lesson flow step by step.
-4. Use the student's name after they tell you it.
+It is a pleasure to meet you. Let's start with Lesson 1: Greetings and Introducing yourself.
 
-LESSON 1: GREETINGS AND SELF-INTRODUCTIONS
-
---- STEP 1: GREETING AND NAME ---
-
-SAY EXACTLY: "Hello. I am your friendly AI English Teacher. Welcome to your Global English Language Proficiency journey! What is your name?"
-
-WAIT for student to respond with their name.
-When they respond, remember their name and use it throughout the lesson.
-
-SAY EXACTLY: "It is a pleasure to meet you, [NAME]. Let's start with Lesson 1: Greetings and Introducing yourself. I will teach you different ways to say hello and introduce yourself in English.
+I will teach you different ways to say hello and introduce yourself in English.
 
 Hello is neutral and the most commonly used greeting. You can use it at any time.
 
@@ -184,61 +174,17 @@ You can also use any of these 2 ways to introduce yourself:
 1. My name is [NAME]
 2. I am [NAME]
 
-For example, you can say: "Hi, my name is [NAME]" or "Hello, I am [NAME]".
+For example, you can say: "Hi, my name is Dennis" or "Hello, I am Dennis".
 You can use any greeting with either introduction style.
-For example: "Good afternoon, my name is [NAME]" or "Good morning, I am [NAME]".
+For example: "Good afternoon, my name is Dennis" or "Good morning, I am Dennis".
 
-Do you understand, [NAME]?"
-
-WAIT for student to respond with "Yes" or "No".
-
-IF student says "No" or anything indicating they don't understand:
-SAY EXACTLY: "Which part do you not understand, [NAME]?"
-WAIT for student to explain what they don't understand.
-SAY: "Let me explain it another way." Then re-explain the specific part they didn't understand using simpler language.
-SAY: "Do you understand now?"
-WAIT for student to say "Yes" before continuing.
-
-IF student says "Yes" or anything indicating they understand:
-CONTINUE to STEP 2.
-
---- STEP 2: PRACTICE SESSION ---
-
-SAY EXACTLY: "Let's practice together. How would you greet a person for the first time and introduce yourself right now?"
-
-WAIT for student to respond.
-
-IF the student's answer is correct (contains any greeting like "Hi", "Hello", "Hey", "Good morning", "Good afternoon", "Good evening" AND contains an introduction like "My name is" or "I am"):
-SAY: "Well done, that was correct!"
-CONTINUE to next question.
-
-IF the student's answer is incorrect:
-SAY: "You said [repeat what the student said]. That is not correct. You should say something like 'Good afternoon, my name is [NAME]' or 'Hello, I am [NAME]'. Can you try that again?"
-WAIT for student to try again.
-After they try again correctly, SAY: "Good job!" and CONTINUE.
-
-SAY: "Now imagine it is 8 PM. What greeting would you use?"
-
-WAIT for student to respond.
-IF correct (contains "Good evening" or similar):
-SAY: "Excellent!"
-
-SAY: "Now imagine it is 9 AM. What greeting would you use?"
-
-WAIT for student to respond.
-IF correct (contains "Good morning" or similar):
-SAY: "Fantastic work!"
-
-SAY EXACTLY: "Fantastic work, [NAME]! You have completed Lesson 1. You are ready to move on to Lesson 2. Click 'Mark as Complete' to continue."
-
---- LESSON COMPLETE ---
-The student has successfully completed Lesson 1. Automatically mark the lesson as complete when they click the button.`;
+Do you understand?`;
    
     case "lesson_2":
-      return `Let's practice! I'm your G.E.L.P. tutor. Lesson 2 coming soon.`;
+      return `Lesson 2 coming soon.`;
    
     case "lesson_3":
-      return `Let's practice! I'm your G.E.L.P. tutor. Lesson 3 coming soon.`;
+      return `Lesson 3 coming soon.`;
    
     default:
       return `Let's practice! I'm your G.E.L.P. tutor. How can I help you today?`;
