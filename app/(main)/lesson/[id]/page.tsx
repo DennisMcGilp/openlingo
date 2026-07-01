@@ -3,9 +3,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
+// ─── LESSON DATA ───
 interface LessonStep {
   id: string;
-  type: 'speak' | 'listen' | 'wait' | 'end';
+  type: 'speak' | 'end';
   text: string;
   waitForResponse?: boolean;
   expectedAnswers?: string[];
@@ -37,99 +38,85 @@ const lessonData: Record<string, Lesson> = {
       {
         id: "step_2",
         type: "speak",
-        text: "It is a pleasure to meet you. Let's start with Lesson 1: Greetings and Introducing yourself. I will teach you different ways to say hello and introduce yourself in English.",
+        text: "It is a pleasure to meet you. Let's start with Lesson 1: Greetings and Introducing yourself.",
         waitForResponse: false,
         nextStep: "step_3",
       },
       {
         id: "step_3",
         type: "speak",
-        text: "Hello is neutral and the most commonly used greeting. You can use it at any time.",
+        text: "Hello is neutral. You can use it at any time. Hi and Hey are informal. Use them with friends and family.",
         waitForResponse: false,
         nextStep: "step_4",
       },
       {
         id: "step_4",
         type: "speak",
-        text: "Hi and Hey are informal. You can also use these at any time, but it is best to only use them with close friends or family.",
+        text: "Good Morning is used from the early morning until 12 PM. Good Afternoon is used from 12 PM to 6 PM. Good Evening is used after 6 PM.",
         waitForResponse: false,
         nextStep: "step_5",
       },
       {
         id: "step_5",
         type: "speak",
-        text: "We say Good Morning from the time we wake up in the early morning until 12 PM, which is the middle of the day.",
+        text: "You can introduce yourself by saying 'My name is' or 'I am'. For example: 'Hi, my name is Dennis' or 'Hello, I am Dennis'.",
         waitForResponse: false,
         nextStep: "step_6",
       },
       {
         id: "step_6",
         type: "speak",
-        text: "Good Afternoon is used from 12 PM to 6 PM. Good Evening is used after 6 PM, when it starts getting dark outside.",
-        waitForResponse: false,
-        nextStep: "step_7",
+        text: "Do you understand?",
+        waitForResponse: true,
+        expectedAnswers: ["yes", "yeah", "yep", "sure", "ok", "okay"],
+        feedbackCorrect: "Great! Let's continue.",
+        feedbackIncorrect: "That's okay. Let me explain again.",
+        nextStepOnYes: "step_7",
+        nextStepOnNo: "step_6_repeat",
+      },
+      {
+        id: "step_6_repeat",
+        type: "speak",
+        text: "Good Morning is before 12 PM. Good Afternoon is 12 PM to 6 PM. Good Evening is after 6 PM. Say 'My name is' or 'I am' to introduce yourself. Do you understand now?",
+        waitForResponse: true,
+        expectedAnswers: ["yes", "yeah", "yep", "sure", "ok", "okay"],
+        feedbackCorrect: "Great! Let's continue.",
+        feedbackIncorrect: "Don't worry, we'll practice together.",
+        nextStepOnYes: "step_7",
+        nextStepOnNo: "step_7",
       },
       {
         id: "step_7",
         type: "speak",
-        text: "You can introduce yourself in two ways. Say 'My name is' or say 'I am'. For example, 'Hi, my name is Dennis' or 'Hello, I am Dennis'. You can mix any greeting with any introduction.",
-        waitForResponse: false,
+        text: "Let's practice. How would you greet someone right now?",
+        waitForResponse: true,
+        expectedAnswers: ["hi", "hello", "hey", "good morning", "good afternoon", "good evening"],
+        feedbackCorrect: "Well done!",
+        feedbackIncorrect: "Try saying 'Hello' or 'Good morning'.",
         nextStep: "step_8",
       },
       {
         id: "step_8",
         type: "speak",
-        text: "Do you understand?",
+        text: "Now imagine it's 8 PM. What greeting would you use?",
         waitForResponse: true,
-        expectedAnswers: ["yes", "yeah", "yep", "sure", "ok", "okay"],
-        feedbackCorrect: "Great! Let's continue.",
-        feedbackIncorrect: "Let me explain it another way.",
-        nextStepOnYes: "step_9",
-        nextStepOnNo: "step_8_repeat",
-      },
-      {
-        id: "step_8_repeat",
-        type: "speak",
-        text: "Which part do you not understand? Let me explain it another way. We use different greetings for different times of day. Good Morning is before 12 PM. Good Afternoon is from 12 PM to 6 PM. Good Evening is after 6 PM. And you can introduce yourself by saying 'My name is' or 'I am'. Do you understand now?",
-        waitForResponse: true,
-        expectedAnswers: ["yes", "yeah", "yep", "sure", "ok", "okay"],
-        feedbackCorrect: "Great! Let's continue.",
-        feedbackIncorrect: "Don't worry, we'll practice together and you'll learn it.",
-        nextStepOnYes: "step_9",
-        nextStepOnNo: "step_9",
+        expectedAnswers: ["good evening", "evening"],
+        feedbackCorrect: "Excellent!",
+        feedbackIncorrect: "The correct answer is 'Good Evening'.",
+        nextStep: "step_9",
       },
       {
         id: "step_9",
         type: "speak",
-        text: "Let's practice together. How would you greet a person for the first time and introduce yourself right now?",
+        text: "Now imagine it's 9 AM. What greeting would you use?",
         waitForResponse: true,
-        expectedAnswers: ["hi", "hello", "hey", "good morning", "good afternoon", "good evening", "my name is", "i am"],
-        feedbackCorrect: "Well done, that was correct!",
-        feedbackIncorrect: "That is not correct. You should say something like 'Hello, my name is Dennis' or 'Good afternoon, I am Dennis'. Let's move on.",
+        expectedAnswers: ["good morning", "morning"],
+        feedbackCorrect: "Fantastic!",
+        feedbackIncorrect: "The correct answer is 'Good Morning'.",
         nextStep: "step_10",
       },
       {
         id: "step_10",
-        type: "speak",
-        text: "Now imagine it is 8 PM. What greeting would you use?",
-        waitForResponse: true,
-        expectedAnswers: ["good evening", "evening"],
-        feedbackCorrect: "Excellent! That is correct.",
-        feedbackIncorrect: "The correct answer is 'Good Evening'. Let's keep going.",
-        nextStep: "step_11",
-      },
-      {
-        id: "step_11",
-        type: "speak",
-        text: "Now imagine it is 9 AM. What greeting would you use?",
-        waitForResponse: true,
-        expectedAnswers: ["good morning", "morning"],
-        feedbackCorrect: "Fantastic! That is correct.",
-        feedbackIncorrect: "The correct answer is 'Good Morning'. Let's keep going.",
-        nextStep: "step_12",
-      },
-      {
-        id: "step_12",
         type: "end",
         text: "Fantastic work! You have completed Lesson 1. You are ready to move on to Lesson 2.",
       },
@@ -137,13 +124,12 @@ const lessonData: Record<string, Lesson> = {
   },
 };
 
-interface LessonPlayerProps {
-  lessonId: string;
-  onComplete?: () => void;
-}
-
-export function LessonPlayer({ lessonId, onComplete }: LessonPlayerProps) {
+// ─── LESSON PLAYER COMPONENT ───
+export default function LessonPage({ params }: { params: { id: string } }) {
   const router = useRouter();
+  const lessonId = params.id;
+  const lesson = lessonData[lessonId];
+
   const [currentStepId, setCurrentStepId] = useState<string>("");
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isWaiting, setIsWaiting] = useState(false);
@@ -156,7 +142,6 @@ export function LessonPlayer({ lessonId, onComplete }: LessonPlayerProps) {
   const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const lesson = lessonData[lessonId];
   const currentStep = lesson?.steps.find((s) => s.id === currentStepId);
 
   useEffect(() => {
@@ -185,11 +170,10 @@ export function LessonPlayer({ lessonId, onComplete }: LessonPlayerProps) {
 
     if (currentStep.type === "end") {
       setIsComplete(true);
-      if (onComplete) onComplete();
       return;
     }
 
-    if (currentStep.type === "speak" || currentStep.type === "listen") {
+    if (currentStep.type === "speak") {
       speakText(currentStep.text);
     }
   }, [currentStep]);
@@ -290,7 +274,7 @@ export function LessonPlayer({ lessonId, onComplete }: LessonPlayerProps) {
           setIsWaiting(false);
         }, 1500);
       } else {
-        setFeedback(currentStep.feedbackIncorrect || "Not quite. Let's try again.");
+        setFeedback(currentStep.feedbackIncorrect || "Not quite. Try again.");
         setStudentInput("");
         setTimeout(() => {
           setFeedback("");
@@ -324,16 +308,12 @@ export function LessonPlayer({ lessonId, onComplete }: LessonPlayerProps) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
         <div className="text-6xl mb-6">🎉</div>
-        <h2 className="text-3xl font-bold text-green-600 mb-4">
-          Lesson Complete!
-        </h2>
+        <h2 className="text-3xl font-bold text-green-600 mb-4">Lesson Complete!</h2>
         <p className="text-lg text-gray-600 mb-6">
           {currentStep?.text || "You have completed this lesson!"}
         </p>
         <button
-          onClick={() => {
-            router.push("/modules");
-          }}
+          onClick={() => router.push("/modules")}
           className="px-6 py-3 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600"
         >
           Return to Modules
@@ -344,21 +324,15 @@ export function LessonPlayer({ lessonId, onComplete }: LessonPlayerProps) {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">{lesson.title}</h1>
-      </div>
+      <h1 className="text-2xl font-bold text-gray-800 mb-6">{lesson.title}</h1>
 
       <div className="bg-gray-50 rounded-lg p-6 min-h-[150px] flex items-center justify-center border-2 border-gray-200">
         {subtitleText ? (
-          <p className="text-xl text-gray-800 text-center leading-relaxed">
-            {subtitleText}
-          </p>
+          <p className="text-xl text-gray-800 text-center leading-relaxed">{subtitleText}</p>
         ) : isSpeaking ? (
           <p className="text-gray-400 text-lg">Speaking...</p>
         ) : isWaiting ? (
-          <p className="text-blue-500 text-lg font-medium">
-            Please respond below...
-          </p>
+          <p className="text-blue-500 text-lg font-medium">Please respond below...</p>
         ) : (
           <p className="text-gray-400 text-lg">Loading...</p>
         )}
@@ -400,17 +374,14 @@ export function LessonPlayer({ lessonId, onComplete }: LessonPlayerProps) {
               Send
             </button>
           </div>
-          <p className="text-sm text-gray-400 mt-2">
-            Press Enter to send your response
-          </p>
+          <p className="text-sm text-gray-400 mt-2">Press Enter to send your response</p>
         </div>
       )}
 
       <div className="mt-8">
         <div className="flex justify-between text-sm text-gray-500">
           <span>
-            Step {lesson.steps.findIndex((s) => s.id === currentStepId) + 1} of{" "}
-            {lesson.steps.length}
+            Step {lesson.steps.findIndex((s) => s.id === currentStepId) + 1} of {lesson.steps.length}
           </span>
         </div>
       </div>
