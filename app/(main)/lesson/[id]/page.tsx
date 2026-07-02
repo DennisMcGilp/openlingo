@@ -148,6 +148,8 @@ export default function LessonPage() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       speechSynthRef.current = window.speechSynthesis;
+      // Load voices
+      window.speechSynthesis.getVoices();
     }
   }, []);
 
@@ -189,7 +191,7 @@ export default function LessonPage() {
 
     typingIntervalRef.current = setInterval(() => {
       if (index < text.length) {
-        setSubtitleText((prev) => prev + text[index]);
+        setSubtitleText(text.slice(0, index + 1));
         index++;
       } else {
         if (typingIntervalRef.current) {
@@ -205,21 +207,26 @@ export default function LessonPage() {
 
     speechSynthRef.current.cancel();
 
+    // Clean the text
     const cleanText = text
       .replace(/[^\w\s.,!?' ]/g, "")
       .replace(/\s+/g, " ")
       .trim();
 
-    if (!cleanText) return;
+    // If cleanText is empty, use the original text
+    const finalText = cleanText || text;
 
-    typeText(cleanText);
+    if (!finalText) return;
 
-    const utterance = new SpeechSynthesisUtterance(cleanText);
+    typeText(finalText);
+
+    const utterance = new SpeechSynthesisUtterance(finalText);
     utterance.lang = "en-US";
-    utterance.rate = 0.6;
+    utterance.rate = 0.8; // Slightly faster
     utterance.pitch = 1;
     utterance.volume = 1;
 
+    // Try to find a good English voice
     const voices = speechSynthRef.current.getVoices();
     const preferredVoice = voices.find(
       (v) =>
