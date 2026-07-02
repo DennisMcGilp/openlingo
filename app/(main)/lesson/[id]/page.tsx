@@ -125,7 +125,13 @@ const lessonData: Record<string, Lesson> = {
 };
 
 // ─── LESSON PLAYER COMPONENT ───
-export default function LessonPage({ params }: { params: { id: string } }) {
+interface LessonPageProps {
+  params: {
+    id: string;
+  };
+}
+
+export default function LessonPage({ params }: LessonPageProps) {
   const router = useRouter();
   const lessonId = params.id;
   const lesson = lessonData[lessonId];
@@ -299,7 +305,7 @@ export default function LessonPage({ params }: { params: { id: string } }) {
   if (!lesson) {
     return (
       <div className="text-center py-12">
-        <p className="text-lg">Lesson not found</p>
+        <p className="text-lg">Lesson not found. ID: {lessonId}</p>
       </div>
     );
   }
