@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 
 // ─── LESSON DATA ───
 interface LessonStep {
@@ -125,15 +125,10 @@ const lessonData: Record<string, Lesson> = {
 };
 
 // ─── LESSON PLAYER COMPONENT ───
-interface LessonPageProps {
-  params: {
-    id: string;
-  };
-}
-
-export default function LessonPage({ params }: LessonPageProps) {
+export default function LessonPage() {
   const router = useRouter();
-  const lessonId = params.id;
+  const params = useParams();
+  const lessonId = params.id as string;
   const lesson = lessonData[lessonId];
 
   const [currentStepId, setCurrentStepId] = useState<string>("");
