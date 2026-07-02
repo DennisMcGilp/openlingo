@@ -1,3 +1,6 @@
+
+Dennis McGilp
+​You​
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -70,7 +73,7 @@ const lessonData: Record<string, Lesson> = {
         waitForResponse: true,
         expectedAnswers: ["yes", "yeah", "yep", "sure", "ok", "okay"],
         feedbackCorrect: "Great! Let's continue.",
-        feedbackIncorrect: "That's okay. Let me explain again.",
+        feedbackIncorrect: "That's okay. Let me explain again. Good Morning is before 12 PM. Good Afternoon is 12 PM to 6 PM. Good Evening is after 6 PM. Say 'My name is' or 'I am' to introduce yourself. Do you understand now?",
         nextStepOnYes: "step_7",
         nextStepOnNo: "step_6_repeat",
       },
@@ -81,7 +84,7 @@ const lessonData: Record<string, Lesson> = {
         waitForResponse: true,
         expectedAnswers: ["yes", "yeah", "yep", "sure", "ok", "okay"],
         feedbackCorrect: "Great! Let's continue.",
-        feedbackIncorrect: "Don't worry, we'll practice together.",
+        feedbackIncorrect: "Don't worry, we'll practice together and you'll learn it.",
         nextStepOnYes: "step_7",
         nextStepOnNo: "step_7",
       },
@@ -91,27 +94,27 @@ const lessonData: Record<string, Lesson> = {
         text: "Let's practice. How would you greet someone right now?",
         waitForResponse: true,
         expectedAnswers: ["hi", "hello", "hey", "good morning", "good afternoon", "good evening"],
-        feedbackCorrect: "Well done!",
-        feedbackIncorrect: "Try saying 'Hello' or 'Good morning'.",
+        feedbackCorrect: "Well done, that was correct!",
+        feedbackIncorrect: "You said that is not correct. Try saying 'Hello' or 'Good morning'.",
         nextStep: "step_8",
       },
       {
         id: "step_8",
         type: "speak",
-        text: "Now imagine it's 8 PM. What greeting would you use?",
+        text: "Now imagine it is 8 PM. What greeting would you use?",
         waitForResponse: true,
         expectedAnswers: ["good evening", "evening"],
-        feedbackCorrect: "Excellent!",
+        feedbackCorrect: "Excellent! That is correct.",
         feedbackIncorrect: "The correct answer is 'Good Evening'.",
         nextStep: "step_9",
       },
       {
         id: "step_9",
         type: "speak",
-        text: "Now imagine it's 9 AM. What greeting would you use?",
+        text: "Now imagine it is 9 AM. What greeting would you use?",
         waitForResponse: true,
         expectedAnswers: ["good morning", "morning"],
-        feedbackCorrect: "Fantastic!",
+        feedbackCorrect: "Fantastic! That is correct.",
         feedbackIncorrect: "The correct answer is 'Good Morning'.",
         nextStep: "step_10",
       },
@@ -138,17 +141,18 @@ export default function LessonPage() {
   const [studentInput, setStudentInput] = useState("");
   const [feedback, setFeedback] = useState("");
   const [subtitleText, setSubtitleText] = useState("");
+  const [isListening, setIsListening] = useState(false);
 
   const speechSynthRef = useRef<SpeechSynthesis | null>(null);
   const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const recognitionRef = useRef<any>(null);
 
   const currentStep = lesson?.steps.find((s) => s.id === currentStepId);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       speechSynthRef.current = window.speechSynthesis;
-      // Load voices
       window.speechSynthesis.getVoices();
     }
   }, []);
@@ -207,33 +211,31 @@ export default function LessonPage() {
 
     speechSynthRef.current.cancel();
 
-    // Clean the text
     const cleanText = text
       .replace(/[^\w\s.,!?' ]/g, "")
       .replace(/\s+/g, " ")
       .trim();
 
-    // If cleanText is empty, use the original text
     const finalText = cleanText || text;
-
     if (!finalText) return;
 
     typeText(finalText);
 
     const utterance = new SpeechSynthesisUtterance(finalText);
     utterance.lang = "en-US";
-    utterance.rate = 0.8; // Slightly faster
+    utterance.rate = 0.8;
     utterance.pitch = 1;
     utterance.volume = 1;
 
-    // Try to find a good English voice
     const voices = speechSynthRef.current.getVoices();
     const preferredVoice = voices.find(
       (v) =>
         v.lang.startsWith("en") &&
         (v.name.includes("Google") ||
           v.name.includes("Natural") ||
-          v.name.includes("Premium"))
+          v.name.includes("Premium") ||
+          v.name.includes("Samantha") ||
+          v.name.includes("Zira"))
     ) || voices.find((v) => v.lang.startsWith("en"));
 
     if (preferredVoice) {
@@ -257,6 +259,54 @@ export default function LessonPage() {
     };
 
     speechSynthRef.current.speak(utterance);
+  };
+
+  const startListening = () => {
+    if (typeof window === "undefined") return;
+
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      alert("Speech recognition is not supported in this browser. Please use Chrome or Edge.");
+      return;
+    }
+
+    if (isListening) {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      setIsListening(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.continuous = false;
+    recognition.interimResults = true;
+
+    recognition.onresult = (event: any) => {
+      const transcript = Array.from(event.results)
+        .map((result: any) => result[0].transcript)
+        .join("");
+      setStudentInput(transcript);
+      if (event.results[0].isFinal) {
+        setIsListening(false);
+        setTimeout(() => handleSubmit(), 300);
+      }
+    };
+
+    recognition.onerror = () => {
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognition.start();
+    setIsListening(true);
+    recognitionRef.current = recognition;
   };
 
   const handleSubmit = () => {
@@ -370,10 +420,18 @@ export default function LessonPage() {
               value={studentInput}
               onChange={(e) => setStudentInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Type your answer here..."
+              placeholder="Type or speak your answer..."
               className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-lg"
               autoFocus
             />
+            <button
+              onClick={startListening}
+              className={`px-4 py-3 rounded-lg font-bold text-white transition-colors ${
+                isListening ? "bg-red-500 animate-pulse" : "bg-green-500 hover:bg-green-600"
+              }`}
+            >
+              {isListening ? "🔴 Stop" : "🎤 Speak"}
+            </button>
             <button
               onClick={handleSubmit}
               disabled={!studentInput.trim()}
@@ -382,7 +440,7 @@ export default function LessonPage() {
               Send
             </button>
           </div>
-          <p className="text-sm text-gray-400 mt-2">Press Enter to send your response</p>
+          <p className="text-sm text-gray-400 mt-2">Type your answer or click Speak to use your voice</p>
         </div>
       )}
 
