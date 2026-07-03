@@ -218,44 +218,64 @@ export default function LessonPage() {
 
     typeText(finalText);
 
-    const utterance = new SpeechSynthesisUtterance(finalText);
-    utterance.lang = "en-US";
-    utterance.rate = 0.8;
-    utterance.pitch = 1;
-    utterance.volume = 1;
+    // Split into sentences
+    const sentences = finalText.match(/[^.!?]+[.!?]+/g) || [finalText];
+    let sentenceIndex = 0;
 
-    const voices = speechSynthRef.current.getVoices();
-    const preferredVoice = voices.find(
-      (v) =>
-        v.lang.startsWith("en") &&
-        (v.name.includes("Google") ||
-          v.name.includes("Natural") ||
-          v.name.includes("Premium") ||
-          v.name.includes("Samantha") ||
-          v.name.includes("Zira"))
-    ) || voices.find((v) => v.lang.startsWith("en"));
+    function speakNextSentence() {
+      if (sentenceIndex >= sentences.length) {
+        setIsSpeaking(false);
+        if (currentStep?.waitForResponse) {
+          setIsWaiting(true);
+          setTimeout(() => {
+            inputRef.current?.focus();
+          }, 300);
+        } else if (currentStep?.nextStep) {
+          setTimeout(() => {
+            setCurrentStepId(currentStep.nextStep!);
+          }, 500);
+        }
+        return;
+      }
 
-    if (preferredVoice) {
-      utterance.voice = preferredVoice;
+      const sentence = sentences[sentenceIndex].trim();
+      if (!sentence) {
+        sentenceIndex++;
+        speakNextSentence();
+        return;
+      }
+
+      const utterance = new SpeechSynthesisUtterance(sentence);
+      utterance.lang = "en-US";
+      utterance.rate = 0.7;
+      utterance.pitch = 1;
+      utterance.volume = 1;
+
+      const voices = speechSynthRef.current!.getVoices();
+      const preferredVoice = voices.find(
+        (v) =>
+          v.lang.startsWith("en") &&
+          (v.name.includes("Google") ||
+            v.name.includes("Natural") ||
+            v.name.includes("Premium") ||
+            v.name.includes("Samantha") ||
+            v.name.includes("Zira"))
+      ) || voices.find((v) => v.lang.startsWith("en"));
+
+      if (preferredVoice) {
+        utterance.voice = preferredVoice;
+      }
+
+      utterance.onend = () => {
+        sentenceIndex++;
+        setTimeout(speakNextSentence, 200);
+      };
+
+      speechSynthRef.current!.speak(utterance);
     }
 
     setIsSpeaking(true);
-
-    utterance.onend = () => {
-      setIsSpeaking(false);
-      if (currentStep?.waitForResponse) {
-        setIsWaiting(true);
-        setTimeout(() => {
-          inputRef.current?.focus();
-        }, 300);
-      } else if (currentStep?.nextStep) {
-        setTimeout(() => {
-          setCurrentStepId(currentStep.nextStep!);
-        }, 500);
-      }
-    };
-
-    speechSynthRef.current.speak(utterance);
+    speakNextSentence();
   };
 
   const startListening = () => {
@@ -316,6 +336,9 @@ export default function LessonPage() {
         input.includes(ans.toLowerCase())
       );
 
+      // Check if it's a "no" response
+      const isNo = ["no", "nope", "not really", "nah"].includes(input);
+
       if (isCorrect) {
         setFeedback(currentStep.feedbackCorrect || "Correct!");
         setTimeout(() => {
@@ -328,6 +351,11 @@ export default function LessonPage() {
           setStudentInput("");
           setIsWaiting(false);
         }, 1500);
+      } else if (isNo && currentStep.nextStepOnNo) {
+        // Trigger the re-explain step
+        setCurrentStepId(currentStep.nextStepOnNo);
+        setStudentInput("");
+        setIsWaiting(false);
       } else {
         setFeedback(currentStep.feedbackIncorrect || "Not quite. Try again.");
         setStudentInput("");
